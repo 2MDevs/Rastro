@@ -13,7 +13,7 @@ Domínio planejado: `rastro.gestaohummm.com.br` (ainda **não configurado**).
 
 ## Situação atual
 
-Primeira versão (fundação + operação geográfica + rastreamento + análise). O que já existe e o que falta está detalhado em [docs/documentacao-do-projeto.md](docs/documentacao-do-projeto.md), seção "Situação e pendências". Resumo das pendências:
+Primeira versão (fundação + operação geográfica + rastreamento + análise). **Ainda não executada com as dependências instaladas**: antes do merge, rodar `npm install`, `npm run typecheck`, `npm test` e `npm run build` e corrigir o que falhar. O que já existe e o que falta está detalhado em [docs/documentacao-do-projeto.md](docs/documentacao-do-projeto.md), seção "Situação e pendências". Resumo das pendências:
 
 - **App Android nativo**: ainda não existe. Hoje o rastreamento é feito pelo **Modo campo** no navegador, com a tela ligada (ver limitações).
 - **Equipamento GPS dedicado**: modelo e protocolo A definir. A API de recebimento está pronta para um adaptador ([docs/integracao-gps.md](docs/integracao-gps.md)).

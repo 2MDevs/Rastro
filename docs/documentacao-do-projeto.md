@@ -180,10 +180,10 @@ Instalação do mecanismo: uma vez, `sudo bash scripts/install-auto-update.sh`.
 
 | Item | Situação |
 | --- | --- |
-| Fundação (login, 2FA, sessões, PIN, perfis, isolamento por loja, auditoria) | Implementado, com testes automáticos |
+| Fundação (login, 2FA, sessões, PIN, perfis, isolamento por loja, auditoria) | Implementado; testes automáticos escritos, **execução pendente** |
 | Lojas, territórios, pontos de interesse, campanhas, planejamento de ruas | Implementado |
-| Modo campo no navegador, sessões, pontos, sincronização sem duplicar | Implementado, com testes automáticos; **homologação em campo pendente** |
-| Cobertura estimada (metodologia v1) | Implementado, com testes; **calibração no piloto pendente** |
+| Modo campo no navegador, sessões, pontos, sincronização sem duplicar | Implementado; testes automáticos escritos, **execução e homologação em campo pendentes** |
+| Cobertura estimada (metodologia v1) | Implementado; núcleo geográfico testado; **calibração no piloto pendente** |
 | Painel Matriz, mapa com camadas, relatórios | Implementado |
 | Sistema, Integração, Dispositivos, Segurança da conta, API & Webhooks, atualização | Implementado; **instalação e teste do rollback na VPS pendentes** |
 | App Android nativo | **A fazer** (prazo e responsável: A definir) |
@@ -193,4 +193,4 @@ Instalação do mecanismo: uma vez, `sudo bash scripts/install-auto-update.sh`.
 | Retenção dos dados de localização | **A definir** (avaliação jurídica) |
 | Cronograma e custos | **A definir** |
 
-Nada foi homologado em produção. Os itens "implementado" significam código pronto e, onde indicado, testes automáticos passando contra PostgreSQL real.
+Nada foi homologado em produção. "Implementado" significa código pronto. Os testes automáticos (pasta tests/) ainda não foram executados com as dependências instaladas: a primeira execução (`npm install` e `npm test`) é o próximo passo antes do merge. Só o núcleo geográfico (percurso, recorte de ruas e cobertura) foi testado durante o desenvolvimento.
