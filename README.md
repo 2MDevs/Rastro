@@ -57,7 +57,7 @@ npm run typecheck
 
 ## Primeiro acesso
 
-1. Com `ADMIN_EMAIL` e `ADMIN_INITIAL_PASSWORD` no `.env`, o sistema cria o **administrador inicial** na primeira inicialização (troca de senha obrigatória).
+1. Com `ADMIN_EMAIL` e `ADMIN_INITIAL_PASSWORD` no `.env`, o sistema cria o **administrador inicial** na primeira inicialização, com o perfil **Desenvolvedor** (igual ao DocSecure: já vê a tela Integração e o botão "Atualizar sistema"). A troca de senha é obrigatória no primeiro acesso.
 2. Enquanto o e-mail (SMTP) não for configurado **e testado**, só o desenvolvedor (e-mails em `DEVELOPER_EMAILS`) e o administrador inicial entram, sem código por e-mail.
 3. O administrador inicial cadastra o desenvolvedor em **Usuários** (o e-mail que está em `DEVELOPER_EMAILS` vira Desenvolvedor automaticamente).
 4. O desenvolvedor abre **Integração**, configura o SMTP e envia o **e-mail de teste**. A partir daí, o código por e-mail (2FA) vale para todos.

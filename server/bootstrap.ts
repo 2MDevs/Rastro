@@ -4,7 +4,8 @@ import { newId } from './auth/core';
 import { writeAuditRaw } from './audit';
 
 /**
- * Administrador inicial ("usuário fantasma"): criado a partir de ADMIN_EMAIL e ADMIN_INITIAL_PASSWORD
+ * Administrador inicial ("usuário fantasma"), igual ao DocSecure: criado a partir de ADMIN_EMAIL e
+ * ADMIN_INITIAL_PASSWORD com o perfil Desenvolvedor (vê Integração e o botão "Atualizar sistema"),
  * só quando ainda não existe nenhum administrador/desenvolvedor. Troca de senha obrigatória no 1º login.
  */
 export async function ensureInitialAdmin() {
@@ -22,12 +23,12 @@ export async function ensureInitialAdmin() {
   }
   const id = newId('usr');
   await pool.query(
-    `INSERT INTO users (id, name, email, role, password_hash, must_change_password) VALUES ($1, $2, $3, 'ADMIN', $4, true)
+    `INSERT INTO users (id, name, email, role, password_hash, must_change_password) VALUES ($1, $2, $3, 'DEVELOPER', $4, true)
      ON CONFLICT DO NOTHING`,
     [id, 'Administrador inicial', email, await bcrypt.hash(password, 12)]
   );
   await writeAuditRaw({ id: null, name: 'Sistema', role: 'SYSTEM' },
-    { action: 'USER_CREATED', targetType: 'user', targetId: id, targetName: email, details: 'Administrador inicial criado a partir do .env (troca de senha obrigatória).' },
+    { action: 'USER_CREATED', targetType: 'user', targetId: id, targetName: email, details: 'Administrador inicial criado a partir do .env com perfil Desenvolvedor (troca de senha obrigatória).' },
     { ip: 'servidor', device: 'Inicialização' });
   console.log(`[RASTRO] Administrador inicial criado: ${email} (troca de senha obrigatória no primeiro acesso).`);
 }
