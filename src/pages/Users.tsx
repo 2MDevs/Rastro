@@ -8,7 +8,7 @@ import { useStores } from '../components/filters';
 import { useToast } from '../components/toast';
 import { Badge, Button, Card, Checkbox, Drawer, EmptyState, ErrorBox, Field, Input, Notice, PageHeader, Select, Spinner, Table, Td, useConfirm } from '../components/ui';
 
-const MATRIX = ['DEVELOPER', 'ADMIN', 'DIRECTOR', 'COORDINATOR'];
+const MATRIX = ['DEVELOPER', 'ADMIN', 'DIRECTOR', 'FRANCHISE_MANAGER', 'COORDINATOR'];
 
 export default function Users() {
   const { user: me } = useAuth();
@@ -63,14 +63,14 @@ export default function Users() {
   );
 }
 
-function UserForm({ user, roles, onClose, onSaved }: { user: any | null; roles: { value: string; label: string }[]; onClose: () => void; onSaved: () => void }) {
+export function UserForm({ user, roles, onClose, onSaved, defaultStoreIds }: { user: any | null; roles: { value: string; label: string }[]; onClose: () => void; onSaved: () => void; defaultStoreIds?: string[] }) {
   const toast = useToast();
   const { stores } = useStores();
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState(user?.role ?? 'PROMOTER');
-  const [storeIds, setStoreIds] = useState<string[]>(user?.stores?.map((s: any) => s.id) ?? []);
+  const [storeIds, setStoreIds] = useState<string[]>(user?.stores?.map((s: any) => s.id) ?? defaultStoreIds ?? []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const matrix = MATRIX.includes(role);
@@ -107,6 +107,7 @@ function UserForm({ user, roles, onClose, onSaved }: { user: any | null; roles: 
         </Field>
         <Notice tone="info">
           {role === 'ADMIN' || role === 'DIRECTOR' ? 'Painel Matriz com todas as lojas, usuários, auditoria e tela Sistema. Não altera a infraestrutura.'
+            : role === 'FRANCHISE_MANAGER' ? 'Gestor da franquia: todas as lojas e todos os percursos. Cadastra lojas, abre o painel de cada loja e cadastra/vincula as pessoas das lojas (gerentes e divulgadores).'
             : role === 'COORDINATOR' ? 'Painel Matriz com todas as lojas: territórios, campanhas, percursos e relatórios. Não gerencia usuários.'
             : role === 'STORE_MANAGER' ? 'Só as lojas marcadas abaixo: territórios, campanhas, percursos e relatórios dessas lojas.'
             : role === 'PROMOTER' ? 'Só o modo campo: inicia e encerra o rastreamento das campanhas para as quais for escolhido.'

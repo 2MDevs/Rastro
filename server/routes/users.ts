@@ -31,7 +31,11 @@ const LIST_SQL = `
   FROM users u`;
 
 usersRouter.get('/', h(async (req, res) => {
-  const { rows } = await pool.query(`${LIST_SQL} ORDER BY u.status, u.name`);
+  const actor = userOf(req);
+  // O gestor da franquia vê só as pessoas das lojas (gerentes e divulgadores) e a si mesmo
+  const { rows } = actor.role === 'FRANCHISE_MANAGER'
+    ? await pool.query(`${LIST_SQL} WHERE u.role IN ('STORE_MANAGER','PROMOTER') OR u.id = $1 ORDER BY u.status, u.name`, [actor.id])
+    : await pool.query(`${LIST_SQL} ORDER BY u.status, u.name`);
   return res.json({ users: rows.map(toDto), assignableRoles: assignableRoles(userOf(req).role).map((r) => ({ value: r, label: ROLE_LABEL[r] })) });
 }));
 

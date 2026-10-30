@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, Search, Store as StoreIcon, MapPin, Pencil, Crosshair } from 'lucide-react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Plus, Search, Store as StoreIcon, MapPin, Pencil, Crosshair, LayoutDashboard } from 'lucide-react';
 import { ApiError, get, patch, post, qs } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { relative } from '../lib/format';
@@ -11,10 +11,13 @@ import { useToast } from '../components/toast';
 import { Badge, Button, Card, Drawer, EmptyState, ErrorBox, Field, Input, PageHeader, Select, Spinner, Table, Td, Notice } from '../components/ui';
 
 export default function Stores() {
-  const { can } = useAuth();
+  const { can, user } = useAuth();
+  const navigate = useNavigate();
   const { stores, loading, reload } = useStores();
   const [editing, setEditing] = useState<Store | 'new' | null>(null);
   const manage = can('stores.manage');
+  // Quem tem uma loja só vai direto para o painel dela
+  if (user?.stores !== 'ALL' && stores.length === 1 && !loading) return <Navigate to={`/unidades/${stores[0].id}`} replace />;
 
   return (
     <div>
@@ -24,15 +27,20 @@ export default function Stores() {
         {loading && !stores.length ? <Spinner /> : stores.length ? (
           <Table head={['Loja', 'Endereço', 'Localização', 'Situação', 'Campanhas ativas', 'Territórios', 'Última atividade', '']}>
             {stores.map((s) => (
-              <tr key={s.id} className="hover:bg-panel-2">
-                <Td><div className="font-medium text-ink">{s.name}</div><div className="text-xs text-ink-3">{s.code}</div></Td>
+              <tr key={s.id} className="hover:bg-panel-2 cursor-pointer" onClick={() => navigate(`/unidades/${s.id}`)}>
+                <Td><Link to={`/unidades/${s.id}`} className="font-medium text-ink hover:underline" onClick={(e) => e.stopPropagation()}>{s.name}</Link><div className="text-xs text-ink-3">{s.code}</div></Td>
                 <Td className="text-ink-2 max-w-64 truncate">{s.address || <span className="text-ink-3">A definir</span>}</Td>
-                <Td>{s.location ? <Badge tone="ok"><MapPin className="size-3" /> Definida</Badge> : <Badge tone="warn">A definir</Badge>}</Td>
+                <Td>{s.location ? (s.locationInfo?.source === 'GPS' ? <Badge tone="ok"><MapPin className="size-3" /> GPS na loja</Badge> : <Badge tone="yellow"><MapPin className="size-3" /> Marcada no mapa</Badge>) : <Badge tone="warn">A definir</Badge>}</Td>
                 <Td>{s.status === 'INACTIVE' ? <Badge>Inativa</Badge> : s.operating ? <Badge tone="ok">Em operação</Badge> : <Badge tone="neutral">Cadastrada</Badge>}</Td>
                 <Td className="tabular">{s.activeCampaigns}</Td>
                 <Td className="tabular">{s.areas}</Td>
                 <Td className="text-xs text-ink-3">{s.lastActivityAt ? relative(s.lastActivityAt) : '—'}</Td>
-                <Td className="text-right">{manage && <Button variant="ghost" icon={<Pencil className="size-4" />} onClick={() => setEditing(s)}>Editar</Button>}</Td>
+                <Td className="text-right whitespace-nowrap" >
+                  <span onClick={(e) => e.stopPropagation()}>
+                    <Link to={`/unidades/${s.id}`}><Button variant="ghost" icon={<LayoutDashboard className="size-4" />}>Painel da loja</Button></Link>
+                    {manage && <Button variant="ghost" icon={<Pencil className="size-4" />} onClick={() => setEditing(s)}>Editar</Button>}
+                  </span>
+                </Td>
               </tr>
             ))}
           </Table>
@@ -42,13 +50,13 @@ export default function Stores() {
           </EmptyState>
         )}
       </Card>
-      <p className="text-xs text-ink-3 mt-3">"Cadastrada" significa só que a loja existe no sistema. "Em operação" aparece quando ela tem pelo menos uma campanha ativa.</p>
-      {editing && <StoreForm store={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { invalidateStores(); reload(); setEditing(null); }} />}
+      <p className="text-xs text-ink-3 mt-3">"Cadastrada" significa só que a loja existe no sistema. "Em operação" aparece quando ela tem pelo menos uma campanha ativa. A localização mais precisa é a registrada pelo GPS do celular dentro da loja (no Painel da loja).</p>
+      {editing && <StoreForm store={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={(created) => { invalidateStores(); reload(); setEditing(null); if (created) navigate(`/unidades/${created.id}`); }} />}
     </div>
   );
 }
 
-function StoreForm({ store, onClose, onSaved }: { store: Store | null; onClose: () => void; onSaved: () => void }) {
+function StoreForm({ store, onClose, onSaved }: { store: Store | null; onClose: () => void; onSaved: (created?: Store) => void }) {
   const toast = useToast();
   const [code, setCode] = useState(store?.code ?? '');
   const [name, setName] = useState(store?.name ?? '');
@@ -77,9 +85,8 @@ function StoreForm({ store, onClose, onSaved }: { store: Store | null; onClose: 
     setBusy(true); setError(null);
     const body = { code, name, address: address || null, location, status };
     try {
-      if (store) await patch(`/api/stores/${store.id}`, body); else await post('/api/stores', body);
-      toast('ok', store ? 'Loja atualizada.' : 'Loja cadastrada.');
-      onSaved();
+      if (store) { await patch(`/api/stores/${store.id}`, body); toast('ok', 'Loja atualizada.'); onSaved(); }
+      else { const created = await post<Store>('/api/stores', body); toast('ok', 'Loja cadastrada. Agora registre a localização e vincule as pessoas da loja.'); onSaved(created); }
     } catch (err) { setError(err instanceof ApiError ? err.message : 'Não foi possível salvar.'); } finally { setBusy(false); }
   }
 

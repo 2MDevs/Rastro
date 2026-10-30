@@ -46,6 +46,14 @@ export default function Dashboard() {
       {dash.loading && !d && <Spinner />}
       {d && t && (
         <div className="space-y-5">
+          {can('stores.locate') && d.stores.filter((s: any) => !s.location).length > 0 && (
+            <div className="rounded-xl border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-ink-2 flex flex-wrap items-center gap-3">
+              <span className="flex-1"><strong className="text-ink">{d.stores.filter((s: any) => !s.location).length} loja(s) ainda sem localização no mapa.</strong> Abra o painel da loja e registre a localização com o celular, de dentro da loja.</span>
+              {d.stores.filter((s: any) => !s.location).slice(0, 3).map((s: any) => (
+                <Link key={s.id} to={`/unidades/${s.id}`}><Button variant="primary">Registrar {s.name}</Button></Link>
+              ))}
+            </div>
+          )}
           <Card padded={false}>
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-5 p-5">
               <Stat icon={<StoreIcon className="size-4" />} label={t.stores === 1 ? 'Loja' : 'Lojas cadastradas'} value={num(t.stores)} hint={`${num(t.storesOperating)} em operação`} />

@@ -163,6 +163,7 @@ export const ACTION_LABEL: Record<string, string> = {
   USER_STORES_CHANGED: 'Lojas do usuário alteradas',
   STORE_CREATED: 'Loja criada',
   STORE_UPDATED: 'Loja alterada',
+  STORE_LOCATED: 'Localização da loja registrada (GPS)',
   AREA_CREATED: 'Território criado',
   AREA_UPDATED: 'Território alterado',
   AREA_ARCHIVED: 'Território arquivado',

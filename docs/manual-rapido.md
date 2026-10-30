@@ -19,9 +19,16 @@ Depois de alguns minutos sem uso, a tela bloqueia. Digite o seu **PIN** (ou a se
 4. Sem internet? Pode continuar: os pontos ficam guardados no celular e são enviados quando a conexão voltar.
 5. Ao terminar, toque em **Encerrar rastreamento**.
 
+## Para o Gestor da franquia
+
+1. **Unidades › Nova loja**: cadastre a loja (código, nome, endereço).
+2. Abra o **Painel da loja** e, em **Pessoas da loja**, cadastre o gerente e os divulgadores (eles recebem o link para criar a senha).
+3. Peça ao gerente para **registrar a localização** da loja pelo celular, de dentro da loja.
+4. Acompanhe todas as lojas e todos os percursos pelo **Painel** e pelo **Mapa**.
+
 ## Para gerentes e coordenação
 
-1. **Unidades**: confira se a loja tem localização no mapa.
+1. **Painel da loja › Registrar localização**: com o **celular**, **dentro da loja**, perto da porta ou do balcão, com a localização ligada. Espere a leitura, confira o marcador e confirme.
 2. **Territórios**: crie a área de atuação (raio a partir da loja ou perímetro desenhado no mapa).
 3. **Campanhas › Nova campanha**: escolha a loja, o território, as datas (se ainda não tiver, deixe em branco = A definir) e os responsáveis.
 4. Na campanha, aba **Planejamento e mapa**: toque em **"Buscar ruas do território"**, escolha as ruas que vão receber panfletos e **Salve**.

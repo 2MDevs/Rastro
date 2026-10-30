@@ -117,3 +117,50 @@ describe('chaves de API', () => {
     expect(rows[0].secret_encrypted).not.toContain(ok.body.secret);
   });
 });
+
+describe('gestor da franquia', () => {
+  let gestor: any, lojaNova: string;
+  it('só o administrador cadastra o gestor; o gestor vê todas as lojas', async () => {
+    const r = await admin.post('/api/users').send({ name: 'Gestor', email: 'gestor@teste.local', role: 'FRANCHISE_MANAGER' });
+    expect(r.status).toBe(201);
+    expect((await coord.post('/api/users').send({ name: 'X', email: 'x@teste.local', role: 'FRANCHISE_MANAGER' })).status).toBe(403);
+    gestor = await login((await createUser('FRANCHISE_MANAGER')).email);
+    const s = await gestor.get('/api/stores');
+    expect(s.body.length).toBeGreaterThanOrEqual(2);
+  });
+  it('cadastra loja e cria/vincula pessoas, mas não cria administrador', async () => {
+    const s = await gestor.post('/api/stores').send({ code: 'G1', name: 'Loja do Gestor' });
+    expect(s.status).toBe(201);
+    lojaNova = s.body.id;
+    expect((await gestor.post('/api/users').send({ name: 'Adm', email: 'adm2@teste.local', role: 'ADMIN' })).status).toBe(403);
+    const u = await gestor.post('/api/users').send({ name: 'Gerente G1', email: 'gerente.g1@teste.local', role: 'STORE_MANAGER', storeIds: [lojaNova] });
+    expect(u.status).toBe(201);
+    const outro = await createUser('PROMOTER', { stores: [lojaA] });
+    expect((await gestor.post(`/api/stores/${lojaNova}/users`).send({ userId: outro.id })).status).toBe(200);
+    const p = await gestor.get(`/api/stores/${lojaNova}/users`);
+    expect(p.body.linked.map((x: any) => x.email)).toEqual(expect.arrayContaining(['gerente.g1@teste.local', outro.email]));
+  });
+  it('vê todos os percursos e não vê auditoria nem integração', async () => {
+    expect((await gestor.get('/api/tracking/routes')).status).toBe(200);
+    expect((await gestor.get('/api/audit')).status).toBe(403);
+    expect((await gestor.get('/api/integration/settings')).status).toBe(403);
+  });
+});
+
+describe('localização da loja pelo GPS', () => {
+  const now = () => new Date().toISOString();
+  it('gerente registra a localização da própria loja; precisão ruim é recusada', async () => {
+    const ok = await gerenteA.put(`/api/stores/${lojaA}/location`).send({ lat: -22.91, lng: -43.17, accuracyM: 12, capturedAt: now(), insideStore: true });
+    expect(ok.status).toBe(200);
+    expect(ok.body.locationInfo.source).toBe('GPS');
+    expect(ok.body.locationInfo.accuracyM).toBe(12);
+    const bad = await gerenteA.put(`/api/stores/${lojaA}/location`).send({ lat: -22.91, lng: -43.17, accuracyM: 350, capturedAt: now(), insideStore: true });
+    expect(bad.status).toBe(400);
+    const sem = await gerenteA.put(`/api/stores/${lojaA}/location`).send({ lat: -22.91, lng: -43.17, accuracyM: 10, capturedAt: now() });
+    expect(sem.status).toBe(400);
+  });
+  it('gerente não registra localização de outra loja e divulgador não registra', async () => {
+    expect((await gerenteA.put(`/api/stores/${lojaB}/location`).send({ lat: -22.9, lng: -43.1, accuracyM: 10, capturedAt: now(), insideStore: true })).status).toBe(404);
+    expect((await divulgadorA.put(`/api/stores/${lojaA}/location`).send({ lat: -22.9, lng: -43.1, accuracyM: 10, capturedAt: now(), insideStore: true })).status).toBe(403);
+  });
+});

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Megaphone } from 'lucide-react';
 import { ApiError, get, patch, post, qs } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -30,7 +30,8 @@ export function CoverageCell({ c }: { c: Campaign['coverage'] }) {
 export default function Campaigns() {
   const { can } = useAuth();
   const navigate = useNavigate();
-  const [storeId, setStoreId] = useState('');
+  const [params] = useSearchParams();
+  const [storeId, setStoreId] = useState(params.get('loja') ?? '');
   const [status, setStatus] = useState('');
   const [creating, setCreating] = useState(false);
   const list = useLoad((s) => get<Campaign[]>(`/api/campaigns${qs({ storeId, status })}`, s), [storeId, status]);

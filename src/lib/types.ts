@@ -1,6 +1,6 @@
-export type Role = 'DEVELOPER' | 'ADMIN' | 'DIRECTOR' | 'COORDINATOR' | 'STORE_MANAGER' | 'PROMOTER';
+export type Role = 'DEVELOPER' | 'ADMIN' | 'DIRECTOR' | 'FRANCHISE_MANAGER' | 'COORDINATOR' | 'STORE_MANAGER' | 'PROMOTER';
 export type Capability =
-  | 'matrix.view' | 'stores.manage' | 'territory.manage' | 'campaigns.manage' | 'tracking.view' | 'reports.view'
+  | 'matrix.view' | 'stores.manage' | 'stores.locate' | 'territory.manage' | 'campaigns.manage' | 'tracking.view' | 'reports.view'
   | 'users.manage' | 'devices.manage' | 'audit.view' | 'system.view' | 'apikeys.manage' | 'integration.manage' | 'infra.destructive';
 
 export interface Me {
@@ -13,6 +13,7 @@ export interface LatLng { lat: number; lng: number }
 
 export interface Store {
   id: string; code: string; name: string; address: string | null; location: LatLng | null; status: 'ACTIVE' | 'INACTIVE';
+  locationInfo: { source: 'GPS' | 'MAP' | null; accuracyM: number | null; setAt: string | null; setByName: string | null } | null;
   activeCampaigns: number; liveSessions: number; areas: number; lastActivityAt: string | null; operating: boolean;
 }
 
