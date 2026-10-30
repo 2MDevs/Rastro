@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* Identidade RASTRO: amarelo #F6D35C, grafite #1D1D1B, creme #FDF8CF, cinza #4A4A4A */
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --color-amarelo: #F6D35C;
+  --color-amarelo-forte: #E9C13F;
+  --color-grafite: #1D1D1B;
+  --color-creme: #FDF8CF;
+  --color-cinza: #4A4A4A;
+
+  /* tokens de superfície (trocam com o tema) */
+  --color-bg: var(--rs-bg);
+  --color-panel: var(--rs-panel);
+  --color-panel-2: var(--rs-panel-2);
+  --color-line: var(--rs-line);
+  --color-ink: var(--rs-ink);
+  --color-ink-2: var(--rs-ink-2);
+  --color-ink-3: var(--rs-ink-3);
+  --color-accent-ink: var(--rs-accent-ink);
+  --color-ok: var(--rs-ok);
+  --color-warn: var(--rs-warn);
+  --color-danger: var(--rs-danger);
+  --color-info: var(--rs-info);
+}
+
+:root, [data-theme=dark] {
+  --rs-bg: #151514;
+  --rs-panel: #1D1D1B;
+  --rs-panel-2: #252523;
+  --rs-line: #34342F;
+  --rs-ink: #F7F5EC;
+  --rs-ink-2: #B9B6AA;
+  --rs-ink-3: #85827A;
+  --rs-accent-ink: #F6D35C;
+  --rs-ok: #6FCF97;
+  --rs-warn: #F2A541;
+  --rs-danger: #F07167;
+  --rs-info: #7CB7F2;
+  color-scheme: dark;
+}
+
+[data-theme=light] {
+  --rs-bg: #F4F2EA;
+  --rs-panel: #FFFFFF;
+  --rs-panel-2: #FAF8F0;
+  --rs-line: #E2DED0;
+  --rs-ink: #1D1D1B;
+  --rs-ink-2: #4A4A4A;
+  --rs-ink-3: #77746B;
+  --rs-accent-ink: #8A6A00;
+  --rs-ok: #1E8E57;
+  --rs-warn: #B5650B;
+  --rs-danger: #C62F25;
+  --rs-info: #1F6FB8;
+  color-scheme: light;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--rs-bg);
+  color: var(--rs-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection { background: #F6D35C; color: #1D1D1B; }
+:focus-visible { outline: 2px solid #F6D35C; outline-offset: 2px; }
+
+.tabular { font-variant-numeric: tabular-nums; }
+.scroll-thin { scrollbar-width: thin; scrollbar-color: var(--rs-line) transparent; }
+
+/* Controles do MapLibre no tema do sistema */
+.maplibregl-ctrl-group { background: var(--rs-panel) !important; border: 1px solid var(--rs-line); box-shadow: none !important; border-radius: 10px !important; overflow: hidden; }
+.maplibregl-ctrl-group button { width: 34px; height: 34px; }
+.maplibregl-ctrl-group button + button { border-top: 1px solid var(--rs-line) !important; }
+[data-theme=dark] .maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(1) brightness(1.4); }
+.maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--rs-panel) 85%, transparent) !important; color: var(--rs-ink-2) !important; font-size: 10px; }
+.maplibregl-ctrl-attrib a { color: var(--rs-ink-2) !important; }
+.maplibregl-ctrl-scale { background: transparent !important; border-color: var(--rs-ink-2) !important; color: var(--rs-ink-2) !important; }
+.maplibregl-popup-content { background: var(--rs-panel); color: var(--rs-ink); border: 1px solid var(--rs-line); border-radius: 12px; padding: 10px 12px; font-family: var(--font-sans); }
+.maplibregl-popup-tip { display: none; }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+}
