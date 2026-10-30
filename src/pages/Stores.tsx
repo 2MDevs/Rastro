@@ -120,10 +120,14 @@ function StoreForm({ store, onClose, onSaved }: { store: Store | null; onClose: 
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    // Mensagem no topo do formulário e também no aviso flutuante (no celular o topo pode estar fora da tela)
+    const fail = (m: string) => { setError(m); toast('error', m); };
+    if (!name.trim()) { fail('Informe o nome da loja.'); return; }
+    if (locating !== null) { fail('Aguarde terminar a leitura do GPS.'); return; }
     setBusy(true); setError(null);
     // Com GPS aceitável, a localização é gravada como "GPS dentro da loja" (com a precisão); senão, como marcada no mapa
     const gpsOk = gps && location && gps.accuracy <= 100;
-    const body: any = { code, name, address: address || null, status };
+    const body: any = { code: code.trim() || null, name, address: address || null, status };
     const changed = (location?.lat ?? null) !== (store?.location?.lat ?? null) || (location?.lng ?? null) !== (store?.location?.lng ?? null);
     if (!gpsOk && (!store || changed)) body.location = location;
     try {
@@ -137,17 +141,17 @@ function StoreForm({ store, onClose, onSaved }: { store: Store | null; onClose: 
       }
       toast('ok', store ? 'Loja atualizada.' : location ? 'Loja cadastrada com a localização.' : 'Loja cadastrada. Registre a localização e vincule as pessoas da loja.');
       onSaved(store ? undefined : saved);
-    } catch (err) { setError(err instanceof ApiError ? err.message : 'Não foi possível salvar.'); } finally { setBusy(false); }
+    } catch (err) { fail(err instanceof ApiError ? err.message : 'Não foi possível salvar.'); } finally { setBusy(false); }
   }
 
   return (
     <Drawer open onClose={onClose} title={store ? `Editar ${store.name}` : 'Nova loja'} wide
-      footer={<><Button variant="ghost" onClick={onClose}>Cancelar</Button><Button variant="primary" loading={busy} onClick={submit as any} disabled={!code || !name}>Salvar</Button></>}>
+      footer={<><Button variant="ghost" onClick={onClose}>Cancelar</Button><Button variant="primary" loading={busy} onClick={submit as any}>Salvar</Button></>}>
       <form onSubmit={submit} className="space-y-4">
         {error && <ErrorBox>{error}</ErrorBox>}
         <div className="grid sm:grid-cols-[140px_1fr] gap-3">
-          <Field label="Código"><Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ex.: 012" maxLength={30} /></Field>
-          <Field label="Nome da loja"><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} /></Field>
+          <Field label="Código (opcional)" hint={store ? undefined : 'Vazio = o sistema gera'}><Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ex.: 012" maxLength={30} /></Field>
+          <Field label="Nome da loja *"><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} placeholder="Ex.: Hummm! Centro" /></Field>
         </div>
         <Field label="Endereço" hint="Como aparece para as pessoas. A posição no mapa é definida abaixo."><Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={300} /></Field>
         {store && (
