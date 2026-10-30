@@ -1,8 +1,14 @@
-# Mapa de fundo (OpenStreetMap em arquivo PMTiles)
+# Mapa de fundo
+
+## Padrão: mapa gratuito (OpenFreeMap)
+
+Sem nenhuma configuração, o RASTRO usa o **OpenFreeMap**: mapa público e gratuito com dados do OpenStreetMap, sem cadastro, sem chave de acesso e sem limite de uso declarado. Estilo claro "liberty" e estilo escuro "dark" (se o escuro não estiver disponível, o sistema usa o claro). Por ser um serviço público oferecido "como está", ele pode mudar ou sair do ar; para não depender dele, use o arquivo próprio descrito abaixo.
+
+## Opcional: arquivo próprio (OpenStreetMap em PMTiles)
 
 O RASTRO desenha as informações da operação (lojas, territórios, ruas, percursos) sobre um mapa de fundo. Para não depender do servidor público do OpenStreetMap (que não pode ser usado em produção) nem pagar por acesso, o mapa fica num **arquivo único `.pmtiles`** dentro da pasta `basemap/` do próprio RASTRO.
 
-Enquanto o arquivo não existir, o sistema funciona normalmente: as camadas aparecem sobre um fundo neutro e a tela avisa que o mapa de fundo não foi configurado.
+Quando o arquivo existir e estiver informado em Integração › Mapas, ele passa a ser usado no lugar do mapa gratuito.
 
 ## Gerar o arquivo da região (comandos para o Marcos rodar na VPS)
 

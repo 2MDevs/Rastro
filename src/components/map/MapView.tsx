@@ -68,6 +68,11 @@ const DEFAULT_CENTER: [number, number] = [-47.9, -15.8]; // Brasil (até haver d
 
 const fc = (features: MapFeature[] = []) => ({ type: 'FeatureCollection' as const, features });
 
+function styleFor(cfg: any, theme: Theme): string | StyleSpecification {
+  if (cfg?.basemap?.type === 'style') return theme === 'dark' && cfg.basemap.darkUrl ? cfg.basemap.darkUrl : cfg.basemap.url;
+  return buildStyle(cfg, theme);
+}
+
 function buildStyle(cfg: any, theme: Theme): StyleSpecification {
   const bg = theme === 'dark' ? '#1A1A19' : '#ECEAE2';
   const base: StyleSpecification = {
@@ -118,7 +123,7 @@ export function MapView(props: MapViewProps) {
       maplibregl.addProtocol('pmtiles', protocol.tile);
       protocolAdded = true;
     }
-    const style = cfg.basemap?.type === 'style' ? cfg.basemap.url : buildStyle(cfg, theme);
+    const style = styleFor(cfg, theme);
     const m = new maplibregl.Map({
       container: el.current, style, center: DEFAULT_CENTER, zoom: 3.6, attributionControl: { compact: true },
       dragRotate: false, pitchWithRotate: false, maxPitch: 0,
@@ -128,6 +133,10 @@ export function MapView(props: MapViewProps) {
     m.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
     bindEvents(m);
     m.on('style.load', () => { addOverlay(m); setReady((n) => n + 1); });
+    m.once('error', (ev: any) => {
+      // Estilo escuro gratuito indisponível: cai para o estilo claro
+      if (cfg.basemap?.darkUrl && !m.isStyleLoaded() && /style/i.test(String(ev?.error?.message ?? ''))) m.setStyle(cfg.basemap.url);
+    });
     map.current = m;
     return () => {
       markers.current.forEach(({ m: mk, root }) => { mk.remove(); setTimeout(() => root.unmount()); });
@@ -141,8 +150,9 @@ export function MapView(props: MapViewProps) {
   // Troca de tema: refaz o estilo de fundo (as camadas de dados são recriadas no style.load)
   useEffect(() => {
     const m = map.current;
-    if (!m || !cfg || cfg.basemap?.type === 'style') return;
-    m.setStyle(buildStyle(cfg, theme), { diff: false });
+    if (!m || !cfg) return;
+    if (cfg.basemap?.type === 'style' && !cfg.basemap.darkUrl) return; // estilo único do provedor
+    m.setStyle(styleFor(cfg, theme), { diff: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
 
@@ -172,7 +182,7 @@ export function MapView(props: MapViewProps) {
     });
     m.addLayer({ id: 'pois-circle', type: 'circle', source: 'rs-pois', paint: { 'circle-radius': 6, 'circle-color': MAP_COLORS.poi, 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1.5 } });
     m.addLayer({ id: 'pois-label', type: 'symbol', source: 'rs-pois', minzoom: 14,
-      layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Medium'], 'text-size': 11, 'text-offset': [0, 1.2], 'text-anchor': 'top' },
+      layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 11, 'text-offset': [0, 1.2], 'text-anchor': 'top' },
       paint: { 'text-color': theme === 'dark' ? '#E8E5DA' : '#1D1D1B', 'text-halo-color': theme === 'dark' ? '#1D1D1B' : '#FFFFFF', 'text-halo-width': 1.2 } });
     m.addLayer({ id: 'live-accuracy', type: 'circle', source: 'rs-live', paint: {
       'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 10, ['*', ['coalesce', ['get', 'accuracyM'], 0], 0.01], 20, ['*', ['coalesce', ['get', 'accuracyM'], 0], 10]],
@@ -322,10 +332,10 @@ export function MapView(props: MapViewProps) {
   return (
     <div className={`relative overflow-hidden ${props.className ?? ''}`}>
       <div ref={el} className="absolute inset-0" />
-      {cfg && !cfg.basemap && (
+      {cfg && (!cfg.basemap || cfg.problem) && (
         <div className="absolute left-3 bottom-8 z-10 max-w-xs flex items-start gap-2 rounded-xl border border-line bg-panel/95 px-3 py-2 text-xs text-ink-2">
           <MapPinOff className="size-4 shrink-0 text-warn mt-0.5" />
-          <span>{cfg.problem} As informações da operação continuam aparecendo sobre o fundo neutro.</span>
+          <span>{cfg.problem}{!cfg.basemap && ' As informações da operação continuam aparecendo sobre o fundo neutro.'}</span>
         </div>
       )}
       {props.children}

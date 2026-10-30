@@ -13,6 +13,10 @@ import { BASEMAP_DIR } from './system';
 export const mapRouter = Router();
 mapRouter.use(requireAuth());
 
+/** Mapa gratuito: estilos públicos do OpenFreeMap (dados OpenStreetMap), sem chave de acesso */
+const FREE_STYLE_LIGHT = 'https://tiles.openfreemap.org/styles/liberty';
+const FREE_STYLE_DARK = 'https://tiles.openfreemap.org/styles/dark';
+
 /** O que o mapa da tela deve usar como fundo (ou que não há mapa de fundo configurado) */
 mapRouter.get('/config', h(async (_req, res) => {
   const styleUrl = await getValue('BASEMAP_STYLE_URL');
@@ -20,14 +24,17 @@ mapRouter.get('/config', h(async (_req, res) => {
   let basemap: any = null;
   let problem: string | null = null;
   if (styleUrl) basemap = { type: 'style', url: styleUrl };
-  else if (file) {
-    if (fs.existsSync(path.join(BASEMAP_DIR, file))) basemap = { type: 'pmtiles', url: `/basemap/${encodeURIComponent(file)}` };
-    else problem = `O arquivo ${file} não foi encontrado na pasta do mapa de fundo do servidor.`;
-  } else problem = 'O mapa de fundo ainda não foi configurado (tela Integração › Mapas).';
+  else if (file && fs.existsSync(path.join(BASEMAP_DIR, file))) {
+    basemap = { type: 'pmtiles', url: `/basemap/${encodeURIComponent(file)}` };
+  } else {
+    // Mapa gratuito padrão (OpenFreeMap): funciona sem cadastro, sem chave e sem gerar arquivo
+    basemap = { type: 'style', url: FREE_STYLE_LIGHT, darkUrl: FREE_STYLE_DARK, free: true };
+    if (file) problem = `O arquivo ${file} não foi encontrado no servidor. Usando o mapa gratuito (OpenFreeMap).`;
+  }
   res.setHeader('Cache-Control', 'no-store');
   return res.json({
     basemap, problem,
-    attribution: '© colaboradores do OpenStreetMap',
+    attribution: basemap?.free ? '© OpenFreeMap · © colaboradores do OpenStreetMap' : '© colaboradores do OpenStreetMap',
     glyphs: '/map-assets/fonts/{fontstack}/{range}.pbf',
   });
 }));
