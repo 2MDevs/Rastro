@@ -57,12 +57,23 @@ npm run typecheck
 
 ## Primeiro acesso
 
-1. Com `ADMIN_EMAIL` e `ADMIN_INITIAL_PASSWORD` no `.env`, o sistema cria o **administrador inicial** na primeira inicialização (troca de senha obrigatória).
+1. Com `ADMIN_EMAIL` e `ADMIN_INITIAL_PASSWORD` no `.env`, o sistema cria o **administrador inicial** na primeira inicialização, com o perfil **Desenvolvedor** (igual ao DocSecure: já vê a tela Integração e o botão "Atualizar sistema"). A troca de senha é obrigatória no primeiro acesso.
 2. Enquanto o e-mail (SMTP) não for configurado **e testado**, só o desenvolvedor (e-mails em `DEVELOPER_EMAILS`) e o administrador inicial entram, sem código por e-mail.
 3. O administrador inicial cadastra o desenvolvedor em **Usuários** (o e-mail que está em `DEVELOPER_EMAILS` vira Desenvolvedor automaticamente).
 4. O desenvolvedor abre **Integração**, configura o SMTP e envia o **e-mail de teste**. A partir daí, o código por e-mail (2FA) vale para todos.
 
-## Instalação na VPS (comandos para o Marcos rodar)
+## Colocar no ar (instalação automática na VPS)
+
+Depois de fazer o merge do Pull Request, rode na VPS (como root):
+
+```bash
+cd /var/www && git clone https://github.com/2MDevs/Rastro.git rastro && cd rastro
+sudo bash scripts/install-vps.sh
+```
+
+O script pergunta os e-mails do desenvolvedor e do administrador inicial e faz o resto: escolhe uma porta livre, cria o banco `rastro_db`, gera o `.env` com chaves novas, instala, gera a versão de produção, cria o serviço `rastro`, o site Nginx do domínio `rastro.gestaohummm.com.br`, pede o HTTPS (se o DNS já apontar para a VPS) e instala o botão "Atualizar sistema". Ele não mexe em nada de outros projetos e para com uma mensagem clara se algo falhar.
+
+## Instalação manual na VPS (passo a passo, se preferir)
 
 A VPS é compartilhada: os comandos abaixo criam só o que é do RASTRO (pasta, banco, usuário do banco, serviço e site) e não mexem em outros projetos. Troque os valores entre `< >`.
 
