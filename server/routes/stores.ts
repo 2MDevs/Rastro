@@ -56,7 +56,7 @@ storesRouter.get('/:id', h(async (req, res) => {
 }));
 
 const StoreInput = z.object({
-  code: z.string().trim().min(1, 'Informe o código da loja.').max(30),
+  code: z.string().trim().max(30).optional().nullable(),
   name: z.string().trim().min(2, 'Informe o nome da loja.').max(120),
   address: z.string().trim().max(300).optional().nullable(),
   location: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }).nullable().optional(),
@@ -65,6 +65,14 @@ const StoreInput = z.object({
 
 storesRouter.post('/', requireCapability('stores.manage'), h(async (req, res) => {
   const body = parse(StoreInput, req.body);
+  if (!body.code) {
+    // Sem código informado: gera o próximo número livre (001, 002, ...)
+    const { rows } = await pool.query(`SELECT code FROM stores WHERE code ~ '^[0-9]+$'`);
+    const used = new Set(rows.map((r) => Number(r.code)));
+    let n = 1;
+    while (used.has(n)) n++;
+    body.code = String(n).padStart(3, '0');
+  }
   const id = newId('loja');
   try {
     await tx(async (db) => {
@@ -100,7 +108,7 @@ storesRouter.patch('/:id', requireCapability('stores.manage'), h(async (req, res
   try {
     await tx(async (db) => {
       await db.query(
-        `UPDATE stores SET code = COALESCE($2, code), name = COALESCE($3, name),
+        `UPDATE stores SET code = COALESCE(NULLIF($2, ''), code), name = COALESCE($3, name),
            address = CASE WHEN $4::boolean THEN $5 ELSE address END,
            lat = CASE WHEN $6::boolean THEN $7::double precision ELSE lat END,
            lng = CASE WHEN $6::boolean THEN $8::double precision ELSE lng END,

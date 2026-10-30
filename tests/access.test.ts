@@ -130,6 +130,9 @@ describe('gestor da franquia', () => {
   });
   it('cadastra loja e cria/vincula pessoas, mas não cria administrador', async () => {
     const s = await gestor.post('/api/stores').send({ code: 'G1', name: 'Loja do Gestor' });
+    const auto = await gestor.post('/api/stores').send({ name: 'Loja sem código' });
+    expect(auto.status).toBe(201);
+    expect(auto.body.code).toMatch(/^\d{3}$/);
     expect(s.status).toBe(201);
     lojaNova = s.body.id;
     expect((await gestor.post('/api/users').send({ name: 'Adm', email: 'adm2@teste.local', role: 'ADMIN' })).status).toBe(403);
