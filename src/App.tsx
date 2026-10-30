@@ -14,6 +14,7 @@ const SessionDetail = lazy(() => import('./pages/SessionDetail'));
 const Campaigns = lazy(() => import('./pages/Campaigns'));
 const CampaignDetail = lazy(() => import('./pages/CampaignDetail'));
 const Stores = lazy(() => import('./pages/Stores'));
+const StorePanel = lazy(() => import('./pages/StorePanel'));
 const Territories = lazy(() => import('./pages/Territories'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Users = lazy(() => import('./pages/Users'));
@@ -71,6 +72,7 @@ export default function App() {
           <Route path="/campanhas" element={<Campaigns />} />
           <Route path="/campanhas/:id" element={<CampaignDetail />} />
           <Route path="/unidades" element={<Stores />} />
+          <Route path="/unidades/:id" element={<StorePanel />} />
           <Route path="/territorios" element={<Guard cap="territory.manage"><Territories /></Guard>} />
           <Route path="/relatorios" element={<Guard cap="reports.view"><Reports /></Guard>} />
           <Route path="/usuarios" element={<Guard cap="users.manage"><Users /></Guard>} />

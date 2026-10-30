@@ -26,8 +26,9 @@ Todas as permissões são verificadas **no servidor**, em cada operação. Escon
 | Desenvolvedor (TI) | Todas as lojas | Tudo, inclusive Integração, atualização do sistema e substituição de artefatos |
 | Administrador | Todas as lojas (Painel Matriz) | Lojas, territórios, campanhas, usuários, dispositivos, auditoria, Sistema, chaves de API. Não altera a infraestrutura |
 | Diretor | Todas as lojas (Painel Matriz) | O mesmo que o Administrador |
+| Gestor da franquia | Todas as lojas e todos os percursos (Painel Matriz) | Cadastra lojas, abre o painel de cada loja, cadastra e vincula as pessoas das lojas (gerentes e divulgadores), territórios, campanhas e relatórios. É cadastrado pelo Administrador. Não vê auditoria, Sistema nem Integração |
 | Coordenador | Todas as lojas (Painel Matriz) | Territórios, campanhas, percursos e relatórios. Não gerencia usuários |
-| Gerente de loja | Só as lojas vinculadas a ele | Territórios, campanhas, percursos e relatórios das suas lojas |
+| Gerente de loja | Só as lojas vinculadas a ele | Painel da loja, registro da localização da loja pelo GPS, territórios, campanhas, percursos e relatórios das suas lojas |
 | Divulgador | Só as campanhas em que é responsável | Modo campo (iniciar e encerrar o rastreamento) e os próprios percursos |
 
 Regras importantes:
@@ -71,9 +72,15 @@ O mapa é o centro do sistema. Painel lateral **Camadas de exibição**, cada um
 
 A legenda muda conforme as camadas ligadas. Ao clicar numa loja, rua, percurso, área ou ponto, abre um painel de detalhes (um de cada vez). Na Matriz, o usuário escolhe quais lojas detalhar, para não mostrar tudo de todas as lojas ao mesmo tempo. Filtros: campanha e período dos percursos. Com uma loja escolhida, a faixa do topo mostra área de cobertura, percurso realizado e tempo em campo.
 
-### 3.4 Unidades
+### 3.4 Unidades e Painel da loja
 
-Cadastro das lojas (código, nome, endereço, situação) e da **localização no mapa**, por busca de endereço ou clicando no mapa. Sem localização, a loja não aparece no mapa e não pode ter território por raio.
+**Fluxo de cadastro:** o Administrador cadastra o **Gestor da franquia**; o Gestor cadastra as **lojas**; em cada loja, o Gestor cria ou vincula as **pessoas** (gerente e divulgadores); no **Painel da loja**, a localização da loja é registrada pelo GPS do celular, de dentro da loja.
+
+- **Unidades**: lista de lojas (código, nome, endereço, situação, origem da localização). Quem tem uma loja só vai direto para o painel dela.
+- **Painel da loja**: mapa com a loja e os territórios, campanhas ativas, quem está em campo, distância percorrida e cobertura dos últimos 30 dias, atalhos para o mapa e as campanhas da loja.
+- **Registrar localização (GPS dentro da loja)**: a tela orienta a pessoa a estar dentro da loja, usar o celular com a localização precisa ligada e ficar perto da porta ou do balcão. O GPS é lido por até 30 segundos e a leitura mais precisa é usada. A pessoa confere o marcador no mapa e confirma que está dentro da loja. Precisão acima de 100 m não é aceita. Fica registrado quem registrou, quando e com qual precisão (também na auditoria). A localização só é lida nesse momento; nada é rastreado depois.
+- A localização também pode ser marcada no mapa (busca de endereço ou clique) pelo Gestor/Administração ao editar a loja; nesse caso aparece como "Marcada no mapa", com a recomendação de registrar pelo GPS.
+- **Pessoas da loja** (Gestor e Administração): lista de quem está vinculado, "Nova pessoa" (já vinculada à loja) e "Vincular pessoa já cadastrada". Desvincular tira o acesso da pessoa à loja na hora; a última loja de uma pessoa não pode ser removida (bloqueie o acesso em Usuários).
 
 ### 3.5 Territórios
 

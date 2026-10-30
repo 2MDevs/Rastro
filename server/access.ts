@@ -8,23 +8,25 @@ import { HttpError, forbidden } from './http';
  * Loja (enxergam só as lojas vinculadas a eles): Gerente de loja, Divulgador.
  */
 
-export const ROLES = ['DEVELOPER', 'ADMIN', 'DIRECTOR', 'COORDINATOR', 'STORE_MANAGER', 'PROMOTER'] as const;
+export const ROLES = ['DEVELOPER', 'ADMIN', 'DIRECTOR', 'FRANCHISE_MANAGER', 'COORDINATOR', 'STORE_MANAGER', 'PROMOTER'] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_LABEL: Record<Role, string> = {
   DEVELOPER: 'Desenvolvedor',
   ADMIN: 'Administrador',
   DIRECTOR: 'Diretor',
+  FRANCHISE_MANAGER: 'Gestor da franquia',
   COORDINATOR: 'Coordenador',
   STORE_MANAGER: 'Gerente de loja',
   PROMOTER: 'Divulgador',
 };
 
-export const MATRIX_ROLES: Role[] = ['DEVELOPER', 'ADMIN', 'DIRECTOR', 'COORDINATOR'];
+export const MATRIX_ROLES: Role[] = ['DEVELOPER', 'ADMIN', 'DIRECTOR', 'FRANCHISE_MANAGER', 'COORDINATOR'];
 
 export type Capability =
   | 'matrix.view'          // Painel Matriz, todas as lojas
-  | 'stores.manage'        // criar/alterar lojas e localização
+  | 'stores.manage'        // criar/alterar lojas
+  | 'stores.locate'        // registrar a localização da loja (GPS dentro da loja)
   | 'territory.manage'     // territórios, pontos de interesse
   | 'campaigns.manage'     // campanhas, ruas planejadas, responsáveis
   | 'tracking.view'        // ver percursos de outras pessoas
@@ -39,20 +41,25 @@ export type Capability =
 
 const CAPS: Record<Role, Capability[]> = {
   DEVELOPER: [
-    'matrix.view', 'stores.manage', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
+    'matrix.view', 'stores.manage', 'stores.locate', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
     'users.manage', 'devices.manage', 'audit.view', 'system.view', 'apikeys.manage', 'integration.manage',
     'infra.destructive',
   ],
   ADMIN: [
-    'matrix.view', 'stores.manage', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
+    'matrix.view', 'stores.manage', 'stores.locate', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
     'users.manage', 'devices.manage', 'audit.view', 'system.view', 'apikeys.manage',
   ],
   DIRECTOR: [
-    'matrix.view', 'stores.manage', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
+    'matrix.view', 'stores.manage', 'stores.locate', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
     'users.manage', 'devices.manage', 'audit.view', 'system.view', 'apikeys.manage',
   ],
+  // Gestor da franquia: todas as lojas e todos os percursos; cadastra lojas e as pessoas das lojas
+  FRANCHISE_MANAGER: [
+    'matrix.view', 'stores.manage', 'stores.locate', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
+    'users.manage',
+  ],
   COORDINATOR: ['matrix.view', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view'],
-  STORE_MANAGER: ['territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view'],
+  STORE_MANAGER: ['stores.locate', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view'],
   PROMOTER: [],
 };
 
@@ -67,7 +74,8 @@ export function capabilitiesOf(role: Role): Capability[] {
 /** Quais perfis cada perfil pode criar/editar (ninguém cria alguém acima de si) */
 export function assignableRoles(role: Role): Role[] {
   if (role === 'DEVELOPER') return [...ROLES];
-  if (role === 'ADMIN' || role === 'DIRECTOR') return ['ADMIN', 'DIRECTOR', 'COORDINATOR', 'STORE_MANAGER', 'PROMOTER'];
+  if (role === 'ADMIN' || role === 'DIRECTOR') return ['ADMIN', 'DIRECTOR', 'FRANCHISE_MANAGER', 'COORDINATOR', 'STORE_MANAGER', 'PROMOTER'];
+  if (role === 'FRANCHISE_MANAGER') return ['STORE_MANAGER', 'PROMOTER'];
   return [];
 }
 

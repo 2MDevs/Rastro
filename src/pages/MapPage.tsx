@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { X, Store as StoreIcon, Route as RouteIcon, Clock, Target, SlidersHorizontal, ChevronRight, MapPin } from 'lucide-react';
 import { get, qs } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -22,7 +22,8 @@ export default function MapPage() {
   const { user, can } = useAuth();
   const matrix = user?.stores === 'ALL';
   const { stores } = useStores();
-  const [selectedStores, setSelectedStores] = useState<string[]>([]);
+  const [params] = useSearchParams();
+  const [selectedStores, setSelectedStores] = useState<string[]>(() => (params.get('loja') ? [params.get('loja')!] : []));
   const [campaignId, setCampaignId] = useState('');
   const [period, setPeriod] = useState(defaultPeriod());
   const [layers, setLayers] = useState(initialLayers);
