@@ -94,3 +94,6 @@ body {
   .no-print { display: none !important; }
   body { background: #fff; color: #000; }
 }
+
+/* O MapLibre aplica position: relative ao contêiner do mapa: garante que ele ocupe toda a área */
+.maplibregl-map { width: 100%; height: 100%; }

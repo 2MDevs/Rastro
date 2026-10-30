@@ -331,7 +331,7 @@ export function MapView(props: MapViewProps) {
 
   return (
     <div className={`relative overflow-hidden ${props.className ?? ''}`}>
-      <div ref={el} className="absolute inset-0" />
+      <div ref={el} className="absolute inset-0" style={{ width: "100%", height: "100%", position: "absolute" }} />
       {cfg && (!cfg.basemap || cfg.problem) && (
         <div className="absolute left-3 bottom-8 z-10 max-w-xs flex items-start gap-2 rounded-xl border border-line bg-panel/95 px-3 py-2 text-xs text-ink-2">
           <MapPinOff className="size-4 shrink-0 text-warn mt-0.5" />
