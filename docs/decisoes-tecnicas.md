@@ -1,0 +1,18 @@
+# Decisões técnicas — RASTRO
+
+Registro das decisões tomadas na construção da primeira versão (29/10/2026). Cada item diz o que foi decidido, por quê, e o que continua **A definir**.
+
+| # | Assunto | Decisão adotada | Motivo | Situação |
+| --- | --- | --- | --- | --- |
+| D1 | Autenticação | Padrão dos projetos Hummm! (senha com bcrypt, 2FA por e-mail, sessão no PostgreSQL, dispositivo confiável, PIN). **Firebase não é usado.** | O Prompt Matriz pede Firebase e, ao mesmo tempo, todas as regras da infraestrutura padrão (2FA por e-mail, bloqueio por tentativas, PIN, sessão de 8 h). Usar os dois criaria dois sistemas de login concorrentes, o que o próprio prompt proíbe. O padrão atende tudo com uma única fonte de verdade, como no Ouvix (decisão D1 de 27/10/2026). | Adotada; pode ser revista pelo Marcos |
+| D2 | Perfil de quem panfleta | Novo perfil **Divulgador**: só o modo campo e os próprios percursos. | A lista de perfis do prompt não tinha quem anda na rua, e essa pessoa precisa de login. | Adotada |
+| D3 | Coordenador | Enxerga **todas as lojas** (Painel Matriz), sem gerenciar usuários. | Segue o texto do prompt (seção 3.1). Se a rede preferir coordenador por regional (como no Ouvix), basta mudar para "lojas vinculadas". | Adotada; confirmar |
+| D4 | Dados geográficos | GeoJSON no PostgreSQL + cálculos no servidor (`server/services/geo.ts`). **Sem PostGIS por enquanto.** | Instalar PostGIS mexe no PostgreSQL da VPS compartilhada. Para a escala de bairros, o cálculo no servidor é suficiente e foi testado. Se o volume crescer, migrar para PostGIS é direto (as geometrias já estão em GeoJSON). | Adotada |
+| D5 | Mapa de fundo | Arquivo **PMTiles** da região, hospedado no próprio servidor, desenhado com MapLibre. Alternativa: provedor contratado (endereço de estilo na tela Integração). | O servidor público de mapas do OpenStreetMap não pode ser usado em produção. O arquivo próprio não tem custo por acesso nem depende de terceiros. | Adotada; gerar o arquivo (docs/mapa-de-fundo.md) |
+| D6 | Rede de ruas | Overpass API (OpenStreetMap), consultada só ao planejar uma campanha, com as ruas recortadas pelo território. | Evita instalar um motor de rotas pesado (OSRM/Valhalla) na VPS compartilhada. O servidor público do Overpass aceita esse volume (poucas consultas por campanha). | Adotada |
+| D7 | Cálculo de cobertura | Metodologia v1 (docs/metodologia-cobertura.md), com parâmetros ajustáveis na tela Integração. | O prompt pede metodologia documentada e proíbe dividir distância percorrida por distância total. | Parâmetros iniciais; **calibrar no piloto** |
+| D8 | Rastreamento | **Modo campo no navegador** (tela ligada) nesta versão; **app Android nativo (Kotlin)** como próxima etapa. Equipamento dedicado por adaptador. | O navegador não garante GPS com a tela apagada (o prompt já alerta). O modo campo permite o piloto e a calibração enquanto o app é feito, usando a mesma API. | App Android: A definir (prazo e responsável) |
+| D9 | Tempo real | SSE. | Volume esperado baixo; funciona através do Nginx sem configuração especial além de `proxy_buffering off`. | Adotada |
+| D10 | Retenção dos dados de localização | **A definir** após avaliação jurídica e operacional. Nada é apagado automaticamente. | O prompt proíbe inventar prazo. | Pendente |
+| D11 | Identidade | Ícone do app (PWA) em fundo branco com o símbolo em grafite (versão monocromática da identidade). | Regra da infraestrutura padrão: ícone nunca em fundo preto. | Adotada |
+| D12 | Repositório vazio | Para abrir o primeiro Pull Request, a `main` recebeu um commit inicial vazio (sem arquivos). Todo o código está na branch do PR. | O GitHub não abre Pull Request sem uma branch base. | Feito |

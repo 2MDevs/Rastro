@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-next/
+dist-prev/
+.env
+.env.*
+!.env.example
+.update/
+storage/
+basemap/*.pmtiles
+coverage/
+*.log
+.DS_Store
