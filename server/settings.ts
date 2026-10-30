@@ -36,11 +36,11 @@ export const SETTINGS: Record<string, SettingDef> = {
 
   BASEMAP_PMTILES_FILE: {
     label: 'Arquivo do mapa de fundo (.pmtiles na pasta basemap/)', group: 'map', kind: 'text', default: '',
-    help: 'Nome do arquivo gerado para a região de operação, ex.: regiao.pmtiles',
+    help: 'Opcional. Vazio = mapa gratuito OpenFreeMap. Nome do arquivo gerado para a região, ex.: regiao.pmtiles',
   },
   BASEMAP_STYLE_URL: {
     label: 'Endereço de estilo de mapa de um provedor (opcional)', group: 'map', kind: 'url', default: '',
-    help: 'Use apenas se for contratar um provedor. Quando preenchido, substitui o arquivo .pmtiles.',
+    help: 'Opcional. Use só se contratar um provedor. Quando preenchido, substitui o mapa gratuito e o arquivo .pmtiles.',
   },
   OVERPASS_URL: {
     label: 'Serviço de ruas (Overpass API)', group: 'map', kind: 'url', default: 'https://overpass-api.de/api/interpreter',
