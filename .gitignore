@@ -11,3 +11,4 @@ basemap/*.pmtiles
 coverage/
 *.log
 .DS_Store
+.npm/
