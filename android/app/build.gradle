@@ -1,0 +1,50 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Valores vindos da compilação no GitHub (ou padrões para compilar localmente)
+def baseUrl = System.getenv('RASTRO_BASE_URL') ?: 'https://rastro.gestaohummm.com.br'
+def code = (System.getenv('RASTRO_VERSION_CODE') ?: '1') as Integer
+def keystoreFile = System.getenv('RASTRO_KEYSTORE_FILE')
+
+android {
+    namespace 'br.com.gestaohummm.rastro'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'br.com.gestaohummm.rastro'
+        minSdk 26
+        targetSdk 34
+        versionCode code
+        versionName "1.0.${code}"
+        buildConfigField 'String', 'BASE_URL', "\"${baseUrl}\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreFile) {
+                storeFile file(keystoreFile)
+                storePassword System.getenv('RASTRO_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('RASTRO_KEY_ALIAS')
+                keyPassword System.getenv('RASTRO_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Sem a chave oficial configurada, usa a chave de depuração (só para testes)
+            signingConfig keystoreFile ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

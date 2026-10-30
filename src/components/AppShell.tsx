@@ -2,8 +2,9 @@ import { ReactNode, useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Map, Route, Megaphone, Store, Hexagon, BarChart3, Users, Smartphone, ScrollText, Server, Plug,
-  ShieldCheck, LogOut, Sun, Moon, Bell, Menu, X, Navigation, Wifi, WifiOff,
+  ShieldCheck, LogOut, Sun, Moon, Bell, Menu, X, Navigation, Wifi, WifiOff, Download,
 } from 'lucide-react';
+import { nativeBridge } from '../lib/nativeApp';
 import { useAuth } from '../lib/auth';
 import { Logo, Symbol } from '../brand/Logo';
 import { currentTheme, setTheme } from '../lib/theme';
@@ -12,12 +13,13 @@ import { onRealtimeStatus, realtimeConnected, useRealtime } from '../lib/events'
 import type { Capability } from '../lib/types';
 import { IconButton, Modal, Button, cx } from './ui';
 
-interface NavItem { to: string; label: string; icon: ReactNode; cap?: Capability; promoterOnly?: boolean; hideForPromoter?: boolean }
+interface NavItem { to: string; label: string; icon: ReactNode; cap?: Capability; promoterOnly?: boolean; hideForPromoter?: boolean; hideInApp?: boolean }
 
 const MAIN: NavItem[] = [
   { to: '/', label: 'Painel', icon: <LayoutDashboard className="size-[18px]" />, hideForPromoter: true },
   { to: '/mapa', label: 'Mapa', icon: <Map className="size-[18px]" />, hideForPromoter: true },
   { to: '/campo', label: 'Modo campo', icon: <Navigation className="size-[18px]" /> },
+  { to: '/app', label: 'App Android', icon: <Download className="size-[18px]" />, hideInApp: true },
   { to: '/percursos', label: 'Percursos', icon: <Route className="size-[18px]" /> },
   { to: '/campanhas', label: 'Campanhas', icon: <Megaphone className="size-[18px]" />, hideForPromoter: true },
   { to: '/unidades', label: 'Unidades', icon: <Store className="size-[18px]" />, hideForPromoter: true },
@@ -36,7 +38,7 @@ const ADMIN: NavItem[] = [
 function useNav() {
   const { user, can } = useAuth();
   const promoter = user?.role === 'PROMOTER';
-  const ok = (i: NavItem) => (!i.cap || can(i.cap)) && !(promoter && i.hideForPromoter);
+  const ok = (i: NavItem) => (!i.cap || can(i.cap)) && !(promoter && i.hideForPromoter) && !(i.hideInApp && nativeBridge());
   return { main: MAIN.filter(ok), admin: ADMIN.filter(ok) };
 }
 

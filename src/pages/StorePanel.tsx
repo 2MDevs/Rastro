@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, MapPin, Crosshair, Users as UsersIcon, UserPlus, Link2, X, Megaphone, Route as RouteIcon, Clock, Target, Radio } from 'lucide-react';
+import { ArrowLeft, MapPin, Crosshair, Users as UsersIcon, UserPlus, Link2, X, Megaphone, Route as RouteIcon, Clock, Target, Radio, Smartphone, Share2 } from 'lucide-react';
+import { shareApp } from '../lib/nativeApp';
 import { ApiError, del, get, post, qs } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useLoad } from '../lib/useLoad';
@@ -117,11 +118,19 @@ export default function StorePanel() {
                             <div className="text-sm text-ink truncate">{p.name}</div>
                             <div className="text-xs text-ink-3">{p.roleLabel} · {p.status === 'BLOCKED' ? 'bloqueado' : !p.hasPassword ? 'aguardando criar senha' : p.lastLoginAt ? `último acesso ${relative(p.lastLoginAt)}` : 'nunca entrou'}</div>
                           </div>
+                          {p.role === 'PROMOTER' && p.status === 'ACTIVE' && (
+                            <Button variant="ghost" icon={<Smartphone className="size-4" />} title="Enviar o link do app Android" onClick={() => shareApp(p.name)}>Enviar app</Button>
+                          )}
                           <button aria-label={`Desvincular ${p.name}`} className="text-ink-3 hover:text-danger" onClick={() => unlink(p)}><X className="size-4" /></button>
                         </li>
                       ))}
                     </ul>
                   ) : <EmptyState icon={<UsersIcon className="size-5" />} title="Ninguém vinculado">Cadastre o gerente e os divulgadores desta loja.</EmptyState>}
+                  <div className="flex items-center gap-3 px-5 py-3 border-t border-line bg-panel-2/50">
+                    <Smartphone className="size-4 text-accent-ink shrink-0" />
+                    <div className="flex-1 text-xs text-ink-3">Os divulgadores registram o percurso pelo <strong className="text-ink-2">app Android do RASTRO</strong>, que funciona com a tela apagada.</div>
+                    <Button variant="ghost" icon={<Share2 className="size-4" />} onClick={() => shareApp()}>Compartilhar app</Button>
+                  </div>
                   {people.data.available.length > 0 && (
                     <div className="flex gap-2 p-4 border-t border-line">
                       <Select value={linkId} onChange={(e) => setLinkId(e.target.value)}>

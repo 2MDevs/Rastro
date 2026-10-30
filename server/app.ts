@@ -60,6 +60,11 @@ export function createApp() {
     res.status(db.up ? 200 : 503).json({ status: db.up ? 'UP' : 'DEGRADED', db: db.up ? 'up' : 'down', latencyMs: db.latencyMs, time: new Date().toISOString() });
   });
 
+  // Link curto e público para baixar o app Android (sempre a versão mais nova publicada no GitHub)
+  app.get('/app/rastro.apk', (_req, res) => {
+    res.redirect(302, process.env.ANDROID_APK_URL || 'https://github.com/2MDevs/Rastro/releases/latest/download/rastro.apk');
+  });
+
   app.get('/api/events', requireAuth(), eventsHandler);
   app.use('/api/auth', authRouter);
   app.use('/api/users', usersRouter);

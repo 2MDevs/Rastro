@@ -81,3 +81,15 @@ Marque cada item só depois de testar de verdade. Para cada teste, registre: **d
 - [ ] Atualizar sistema: simular falha e conferir a volta automática para a versão anterior
 - [ ] Backup do banco e teste de restauração
 - [ ] Nenhum outro projeto da VPS foi alterado
+
+## App Android
+
+- [ ] Botão **Enviar app** aparece só para divulgadores ativos e abre o WhatsApp (ou o compartilhamento do celular) com o link.
+- [ ] A página `/app` abre sem login e o botão baixa o `rastro.apk`.
+- [ ] O app instala, abre o login e, depois de entrar, mostra o Modo campo.
+- [ ] Ao tocar em Iniciar, aparece a notificação "Registrando o seu percurso".
+- [ ] Com a tela apagada por 10 minutos andando, o percurso aparece no mapa sem buracos grandes.
+- [ ] Sem internet (modo avião) por alguns minutos: os pontos ficam "aguardando envio" e sobem quando a internet volta.
+- [ ] Ao encerrar, a notificação some depois que os últimos pontos são enviados.
+- [ ] Com o PIN do RASTRO bloqueado, os pontos continuam chegando.
+- [ ] Em celular com economia de bateria agressiva (Xiaomi, Samsung, Motorola), o botão de liberar bateria aparece e funciona.

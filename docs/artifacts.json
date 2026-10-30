@@ -1,7 +1,8 @@
 [
-  { "id": "documentacao", "name": "Documentação do projeto", "file": "RASTRO-Documentacao-do-Projeto.pdf", "version": "0.1.0", "description": "Visão geral, perfis, telas e funções, segurança e guia técnico (instalação, atualização, backup, solução de problemas)." },
-  { "id": "manual", "name": "Manual rápido do usuário", "file": "RASTRO-Manual-Rapido.pdf", "version": "0.1.0", "description": "Como entrar, usar o Modo campo, planejar campanhas e acompanhar a operação." },
-  { "id": "roteiro", "name": "Roteiro de testes", "file": "RASTRO-Roteiro-de-Testes.pdf", "version": "0.1.0", "description": "Checklist de homologação e modelo para registrar sugestões." },
-  { "id": "metodologia", "name": "Metodologia de cobertura (v1)", "file": "RASTRO-Metodologia-de-Cobertura.pdf", "version": "0.1.0", "description": "Como o percurso é tratado e como a cobertura estimada é calculada." },
-  { "id": "notas", "name": "Notas de versão", "file": "RASTRO-Notas-de-Versao.pdf", "version": "0.1.0", "description": "O que mudou em cada atualização aplicada." }
+  {"id": "documentacao", "name": "Documentação do projeto", "file": "RASTRO-Documentacao-do-Projeto.pdf", "version": "0.1.0", "description": "Visão geral, perfis, telas e funções, segurança e guia técnico (instalação, atualização, backup, solução de problemas)."},
+  {"id": "manual", "name": "Manual rápido do usuário", "file": "RASTRO-Manual-Rapido.pdf", "version": "0.1.0", "description": "Como entrar, usar o Modo campo, planejar campanhas e acompanhar a operação."},
+  {"id": "roteiro", "name": "Roteiro de testes", "file": "RASTRO-Roteiro-de-Testes.pdf", "version": "0.1.0", "description": "Checklist de homologação e modelo para registrar sugestões."},
+  {"id": "metodologia", "name": "Metodologia de cobertura (v1)", "file": "RASTRO-Metodologia-de-Cobertura.pdf", "version": "0.1.0", "description": "Como o percurso é tratado e como a cobertura estimada é calculada."},
+  {"id": "app-android", "name": "App Android", "file": "RASTRO-App-Android.pdf", "version": "0.1.0", "description": "Como enviar e instalar o app do divulgador, como o APK é gerado e como criar a chave de assinatura."},
+  {"id": "notas", "name": "Notas de versão", "file": "RASTRO-Notas-de-Versao.pdf", "version": "0.1.0", "description": "O que mudou em cada atualização aplicada."}
 ]
