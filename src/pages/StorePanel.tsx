@@ -101,7 +101,7 @@ export default function StorePanel() {
       <div className="grid xl:grid-cols-[1fr_380px] gap-5">
         <div className="space-y-5">
           <Card padded={false} className="overflow-hidden">
-            <MapView className="h-[420px]" stores={s.location ? [{ id: s.id, name: s.name, code: s.code, location: s.location, selected: true }] : []}
+            <MapView className="h-[300px] sm:h-[420px]" stores={s.location ? [{ id: s.id, name: s.name, code: s.code, location: s.location, selected: true }] : []}
               areas={areaFeatures} routes={routeFeatures} live={liveFeatures}
               fitKey={`${s.id}-${s.location?.lat}-${areaFeatures.length}-${routeFeatures.length > 0}`} visible={{ streets: false, pois: false }} />
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-4 py-2.5 border-t border-line text-xs text-ink-3">
@@ -111,7 +111,7 @@ export default function StorePanel() {
             </div>
           </Card>
           <Card padded={false}>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 p-5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 p-4 sm:p-5">
               <Stat icon={<Megaphone className="size-4" />} label="Campanhas ativas" value={s.activeCampaigns} />
               <Stat icon={<Radio className="size-4" />} label="Em campo agora" value={s.liveSessions} />
               <Stat icon={<RouteIcon className="size-4" />} label="Percorrido (30 dias)" value={d ? distance(d.distanceM) : '—'} hint={d ? `${d.sessions} percurso(s)` : undefined} />

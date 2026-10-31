@@ -97,3 +97,35 @@ body {
 
 /* O MapLibre aplica position: relative ao contêiner do mapa: garante que ele ocupe toda a área */
 .maplibregl-map { width: 100%; height: 100%; }
+
+/* ===================== Versão para celular ===================== */
+/* Tabelas viram cartões empilhados no celular (o rótulo de cada coluna aparece ao lado do valor) */
+@media (max-width: 767px) {
+  .rt { overflow: visible !important; }
+  .rt table, .rt tbody, .rt tr, .rt td { display: block; width: 100%; }
+  .rt thead { display: none; }
+  .rt tbody > tr { padding: 12px 16px; }
+  .rt td {
+    padding: 3px 0 !important; text-align: right !important; white-space: normal !important; max-width: none !important;
+    font-size: 13px; overflow-wrap: anywhere;
+  }
+  .rt td::after { content: ""; display: block; clear: both; }
+  .rt td::before {
+    content: attr(data-label); float: left; max-width: 45%; margin-right: 12px; text-align: left;
+    font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--rs-ink-3); padding-top: 2px;
+  }
+  .rt td:first-child { display: block; text-align: left !important; padding-bottom: 6px !important; font-size: 14px; }
+  .rt td:first-child::before, .rt td[data-label=""]::before { display: none; }
+  .rt td[data-label=""] { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 4px; padding-top: 8px !important; }
+  .rt td[data-label=""]:empty, .rt td:empty { display: none; }
+  .rt td[colspan] { display: block; text-align: center !important; }
+  .rt td[colspan]::before { display: none; }
+
+  /* No iPhone, campo com letra menor que 16px dá zoom sozinho ao tocar */
+  input, select, textarea { font-size: 16px !important; }
+}
+
+/* Áreas seguras (notch e barra de gestos) */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.pt-safe { padding-top: env(safe-area-inset-top); }
+@supports (height: 100dvh) { #root { height: 100dvh; } }

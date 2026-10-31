@@ -50,7 +50,7 @@ export default function SessionDetail() {
       {d.state === 'NO_COMMUNICATION' && <div className="mb-4"><Notice tone="warn">Sem comunicação desde {relative(d.lastPointReceivedAt ?? d.startedAt)}. O aparelho pode estar sem internet (os pontos chegam depois) ou o rastreamento parou.</Notice></div>}
       {d.state === 'SYNC_PENDING' && <div className="mb-4"><Notice tone="info">O aparelho informou {d.pendingPointsReported} ponto(s) ainda não enviados. Eles aparecem aqui quando a internet voltar.</Notice></div>}
       <Card padded={false} className="mb-5">
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-5 p-5">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5 p-4 sm:p-5">
           <Stat label="Distância válida" value={distance(t.distanceM)} hint={`${t.gaps} interrupção(ões) de sinal`} />
           <Stat label="Duração" value={duration(seconds)} hint={`${dateTime(d.startedAt)} → ${d.finishedAt ? dateTime(d.finishedAt) : 'em andamento'}`} />
           <Stat label="Pontos válidos" value={`${t.validPoints} de ${t.totalPoints}`} hint={`${t.discarded.lowAccuracy} imprecisos · ${t.discarded.jumps} saltos · ${t.discarded.rejected} recusados`} />
@@ -60,7 +60,7 @@ export default function SessionDetail() {
       </Card>
       <div className="grid xl:grid-cols-[1fr_320px] gap-5">
         <Card padded={false} className="overflow-hidden">
-          <MapView className="h-[520px]" routes={route} live={live} streets={streets.data?.features ?? []} fitKey={`${fitKey}-${route.length}`} visible={{ stores: false, areas: false, pois: false }} />
+          <MapView className="h-[55dvh] min-h-[320px] sm:h-[520px]" routes={route} live={live} streets={streets.data?.features ?? []} fitKey={`${fitKey}-${route.length}`} visible={{ stores: false, areas: false, pois: false }} />
           {!route.length && <p className="px-5 py-3 text-sm text-ink-3 border-t border-line">Ainda não há trecho válido para desenhar. {t.totalPoints ? 'Os pontos recebidos estão fora do limite de precisão ou isolados.' : 'Nenhum ponto recebido.'}</p>}
         </Card>
         <div className="space-y-4">

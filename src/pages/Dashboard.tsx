@@ -55,7 +55,7 @@ export default function Dashboard() {
             </div>
           )}
           <Card padded={false}>
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-5 p-5">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-5 p-4 sm:p-5">
               <Stat icon={<StoreIcon className="size-4" />} label={t.stores === 1 ? 'Loja' : 'Lojas cadastradas'} value={num(t.stores)} hint={`${num(t.storesOperating)} em operação`} />
               <Stat icon={<Megaphone className="size-4" />} label="Campanhas ativas" value={num(t.campaignsByStatus.ACTIVE)} hint={`${num(t.campaignsByStatus.PLANNED)} planejadas · ${num(t.campaignsByStatus.PAUSED)} pausadas`} />
               <Stat icon={<Radio className="size-4" />} label="Em campo agora" value={num(t.liveSessions)} hint="rastreamentos em andamento" />
@@ -68,7 +68,7 @@ export default function Dashboard() {
 
           <div className="grid xl:grid-cols-[1fr_360px] gap-5">
             <Card title="Mapa da operação" padded={false} actions={<Link to="/mapa"><Button variant="ghost" icon={<MapPinned className="size-4" />}>Abrir mapa completo</Button></Link>}>
-              <MapView className="h-[420px] rounded-b-2xl" stores={storesForMap} live={liveFeatures} fitKey={`${storeId}-${storesForMap.length}`}
+              <MapView className="h-[300px] sm:h-[420px] rounded-b-2xl" stores={storesForMap} live={liveFeatures} fitKey={`${storeId}-${storesForMap.length}`}
                 visible={{ areas: false, streets: false, routes: false, pois: false }}
                 onSelect={(s) => s?.kind === 'store' ? setStoreId(s.props.id) : s?.kind === 'live' ? navigate(`/percursos/${s.props.sessionId}`) : null} />
               {storesForMap.every((s: any) => !s.location) && (
