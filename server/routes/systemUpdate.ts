@@ -1,13 +1,11 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import bcrypt from 'bcryptjs';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { pool } from '../db';
 import { h, HttpError } from '../http';
 import { audit } from '../audit';
-import { requireAuth, requireCapability, requireRecentReauth, userOf } from '../auth/core';
+import { requireAuth, requireCapability, userOf } from '../auth/core';
 import { broadcast } from '../services/realtime';
 
 /**
@@ -106,7 +104,7 @@ systemUpdateRouter.get('/notice', requireAuth(), h(async (_req, res) => {
   return res.json({ updateAvailable: available, running: isUpdateRunning(), version: latest?.short ?? null, message: available ? latest?.message : null, current: cur?.short ?? null });
 }));
 
-systemUpdateRouter.use(requireAuth(), requireCapability('integration.manage'), requireRecentReauth);
+systemUpdateRouter.use(requireAuth(), requireCapability('integration.manage'));
 
 systemUpdateRouter.get('/status', h(async (req, res) => {
   const force = req.query.check === 'true';
@@ -114,6 +112,7 @@ systemUpdateRouter.get('/status', h(async (req, res) => {
   const available = Boolean(cur && latest && cur.commit !== latest.commit);
   return res.json({
     installed: fs.existsSync(INSTALLED_FILE),
+    autoUpdate: autoUpdateEnabled(),
     branch: branch(),
     current: cur, latest, updateAvailable: available,
     changes: available && force && cur && latest ? await pendingChanges(cur.commit, latest.commit) : [],
@@ -125,12 +124,6 @@ systemUpdateRouter.get('/status', h(async (req, res) => {
 
 systemUpdateRouter.post('/', h(async (req, res) => {
   const user = userOf(req);
-  const { rows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [user.id]);
-  const ok = rows[0]?.password_hash && (await bcrypt.compare(String(req.body?.password || ''), rows[0].password_hash));
-  if (!ok) {
-    await audit(req, { action: 'SYSTEM_UPDATE_DENIED', result: 'DENIED', details: 'Senha incorreta ao pedir a atualização.' });
-    throw new HttpError(400, 'Senha incorreta.');
-  }
   if (!fs.existsSync(INSTALLED_FILE)) {
     throw new HttpError(409, 'A atualização automática ainda não foi instalada nesta VPS. Rode uma vez: sudo bash scripts/install-auto-update.sh');
   }
@@ -141,15 +134,31 @@ systemUpdateRouter.post('/', h(async (req, res) => {
   return res.status(202).json({ ok: true });
 }));
 
-/** Vigia o GitHub a cada minuto e avisa as telas abertas quando surgir versão nova */
+/** Atualização automática: ligada, a não ser que AUTO_UPDATE=false no .env */
+export const autoUpdateEnabled = () => String(process.env.AUTO_UPDATE ?? 'true').toLowerCase() !== 'false';
+
+/**
+ * Vigia o GitHub a cada 30 segundos. Quando aparece versão nova na main (ex.: merge de um Pull Request):
+ * - avisa as telas abertas;
+ * - com a atualização automática ligada, já pede a atualização sozinho (o mesmo caminho do botão).
+ * Se a atualização dessa versão já falhou (e voltou para a anterior), não tenta de novo sozinho: fica para o botão.
+ */
 export function startUpdateWatcher() {
   let announced = '';
   const tick = async () => {
     const [cur, latest] = await Promise.all([currentCommit(), latestCommit(true)]);
-    if (!cur || !latest || latest.commit === announced) return;
-    announced = latest.commit;
-    if (latest.commit !== cur.commit) broadcast('update', { available: true, version: latest.short });
+    if (!cur || !latest || latest.commit === cur.commit) return;
+    if (latest.commit !== announced) {
+      announced = latest.commit;
+      broadcast('update', { available: true, version: latest.short });
+    }
+    if (!autoUpdateEnabled() || !fs.existsSync(INSTALLED_FILE) || isUpdateRunning()) return;
+    const last = readJson(STATUS_FILE);
+    if (last?.state === 'failed' && last?.toCommit === latest.commit) return;
+    fs.writeFileSync(REQUEST_FILE, JSON.stringify({ requestedBy: 'automático (nova versão no GitHub)', requestedAt: new Date().toISOString(), fromCommit: cur.commit }), { mode: 0o664 });
+    broadcast('update', { available: true, running: true, version: latest.short });
+    console.log(`[atualização] Nova versão ${latest.short} no GitHub: atualização automática pedida.`);
   };
   setTimeout(() => tick().catch(() => {}), 10_000).unref?.();
-  setInterval(() => tick().catch(() => {}), 60_000).unref?.();
+  setInterval(() => tick().catch(() => {}), 30_000).unref?.();
 }

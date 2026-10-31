@@ -7,14 +7,17 @@ beforeAll(async () => {
 });
 
 describe('configuração inicial (SMTP ainda não testado)', () => {
-  it('só o desenvolvedor entra, sem 2FA', async () => {
+  it('todos entram só com a senha, sem 2FA (e senha errada continua barrada)', async () => {
     await createUser('ADMIN', { email: 'dev@teste.local' });
-    const other = await createUser('ADMIN');
+    const other = await createUser('PROMOTER');
     const dev = await request(app).post('/api/auth/login').send({ email: 'dev@teste.local', password: PASSWORD });
     expect(dev.status).toBe(200);
     expect(dev.body.initialSetupMode).toBe(true);
     const r = await request(app).post('/api/auth/login').send({ email: other.email, password: PASSWORD });
-    expect(r.status).toBe(503);
+    expect(r.status).toBe(200);
+    expect(r.body.initialSetupMode).toBe(true);
+    const wrong = await request(app).post('/api/auth/login').send({ email: other.email, password: 'errada-123456' });
+    expect(wrong.status).toBe(401);
   });
   it('e-mail em DEVELOPER_EMAILS vira Desenvolvedor', async () => {
     const agent = request.agent(app);

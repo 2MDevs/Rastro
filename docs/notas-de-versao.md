@@ -26,3 +26,10 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - Botões **Enviar app** (na lista de usuários e nas pessoas da loja) e **Compartilhar app** no Painel da loja: abrem o compartilhamento do celular ou o WhatsApp com o link pronto.
 - No navegador de celulares Android, o Modo campo agora sugere instalar o app.
 - O APK é gerado automaticamente pelo GitHub a cada atualização da pasta do app e fica sempre no mesmo link: `https://rastro.gestaohummm.com.br/app/rastro.apk`.
+
+## Login, Integração e atualização automática
+
+- Enquanto o e-mail (SMTP) não estiver configurado, **todas as pessoas entram só com a senha** (antes, só o TI entrava e os outros viam "O RASTRO ainda está sendo configurado"). Depois que o e-mail é configurado e testado, o código por e-mail volta a valer para todos.
+- A tela **Integração** não pede mais a senha de novo (continua exclusiva do Desenvolvedor). O botão "Atualizar" também não pede senha.
+- **Atualização automática**: o sistema confere o GitHub a cada 30 segundos e, quando há versão nova na main (merge de um Pull Request), se atualiza sozinho, com a mesma volta automática se algo falhar. Para desligar: `AUTO_UPDATE=false` no `.env`.
+- Depois da atualização, **as telas abertas recarregam sozinhas** e mostram o aviso "O RASTRO foi atualizado". Durante um rastreamento pelo navegador, a tela espera o rastreamento terminar.

@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './lib/auth';
+import { onRealtimeStatus } from './lib/events';
+import { useToast } from './components/toast';
 import { AppShell } from './components/AppShell';
 import { Spinner } from './components/ui';
 import type { Capability } from './lib/types';
@@ -32,19 +34,43 @@ function Guard({ cap, children }: { cap?: Capability; children: ReactNode }) {
   return <>{children}</>;
 }
 
-/** Versão nova aplicada no servidor: recarrega a tela (o service worker busca os arquivos novos) */
+/**
+ * Versão nova aplicada no servidor: recarrega a tela sozinha.
+ * Compara o arquivo principal desta tela com o que o servidor entrega agora; confere a cada 15 s,
+ * quando a conexão ao vivo volta (o servidor reinicia ao atualizar) e quando a pessoa volta para a aba.
+ * Durante um rastreamento pelo navegador não recarrega (para não parar o GPS): espera ele terminar.
+ */
 function ReloadOnDeploy() {
+  const toast = useToast();
   useEffect(() => {
-    let current: string | null = null;
+    try {
+      if (sessionStorage.getItem('rastro-updated')) {
+        sessionStorage.removeItem('rastro-updated');
+        toast('ok', 'O RASTRO foi atualizado para a versão mais nova.');
+      }
+    } catch { /* sem armazenamento */ }
+    if (!import.meta.env.PROD) return;
+    const mine = (document.querySelector('script[type="module"][src*="/assets/index-"]') as HTMLScriptElement | null)?.getAttribute('src')
+      ?.match(/\/assets\/index-[\w-]+\.js/)?.[0] ?? null;
+    let running = false;
     const check = async () => {
+      if (running || !mine) return;
+      running = true;
       try {
-        const html = await fetch('/', { cache: 'no-store' }).then((r) => r.text());
+        const html = await fetch('/', { cache: 'no-store' }).then((r) => (r.ok ? r.text() : ''));
         const sig = (html.match(/\/assets\/index-[\w-]+\.js/) || [''])[0];
-        if (current === null) current = sig;
-        else if (sig && sig !== current && !(window as any).__rastroTrackingActive) window.location.reload();
-      } catch { /* sem internet */ }
+        if (sig && sig !== mine && !(window as any).__rastroTrackingActive) {
+          try { sessionStorage.setItem('rastro-updated', '1'); } catch { /* sem armazenamento */ }
+          window.location.reload();
+        }
+      } catch { /* sem internet ou servidor reiniciando */ } finally { running = false; }
     };
-    if (import.meta.env.PROD) { check(); const t = setInterval(check, 2 * 60_000); return () => clearInterval(t); }
+    check();
+    const t = setInterval(check, 15_000);
+    const offStatus = onRealtimeStatus((up) => { if (up) setTimeout(check, 1500); });
+    const vis = () => { if (document.visibilityState === 'visible') check(); };
+    document.addEventListener('visibilitychange', vis);
+    return () => { clearInterval(t); offStatus(); document.removeEventListener('visibilitychange', vis); };
   }, []);
   return null;
 }
