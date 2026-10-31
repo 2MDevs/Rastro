@@ -4,7 +4,7 @@ import path from 'path';
 import { pool } from '../db';
 import { h, HttpError } from '../http';
 import { audit } from '../audit';
-import { requireAuth, requireCapability, requireRecentReauth, userOf, REAUTH_MINUTES } from '../auth/core';
+import { requireAuth, requireCapability, userOf } from '../auth/core';
 import { createPasswordLink } from '../auth/routes';
 import {
   SETTINGS, settingsSummary, saveSetting, envReadonlySummary, encryptionKey, initialSetupMode, setFlag, smtpConfigured, getValue,
@@ -12,18 +12,12 @@ import {
 import { sendMail } from '../mailer';
 import { BASEMAP_DIR } from './system';
 
-/** Tela Integração: exclusiva do desenvolvedor e protegida por nova confirmação de senha a cada 10 minutos */
+/** Tela Integração: exclusiva do desenvolvedor (o perfil é conferido no servidor em todas as rotas) */
 export const integrationRouter = Router();
 integrationRouter.use(requireAuth(), requireCapability('integration.manage'));
 
-// Diz à tela se precisa pedir a senha (não exige a confirmação)
-integrationRouter.get('/access', h(async (req, res) => {
-  const at: Date | null = (req as any).reauthAt;
-  const validUntil = at ? new Date(at.getTime() + REAUTH_MINUTES * 60_000) : null;
-  return res.json({ unlocked: Boolean(validUntil && validUntil > new Date()), validUntil });
-}));
-
-integrationRouter.use(requireRecentReauth);
+// Mantido por compatibilidade com telas antigas abertas: a Integração não pede mais a senha de novo
+integrationRouter.get('/access', h(async (_req, res) => res.json({ unlocked: true, validUntil: null })));
 
 integrationRouter.get('/settings', h(async (_req, res) => {
   const files = fs.existsSync(BASEMAP_DIR)

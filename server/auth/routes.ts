@@ -82,14 +82,9 @@ authRouter.post('/login', authLimiter, h(async (req, res) => {
   }
   await pool.query('UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1', [user.id]);
 
-  // Configuração inicial: enquanto o e-mail não está configurado e testado, só o desenvolvedor
-  // e o administrador inicial (ADMIN_EMAIL) entram, sem 2FA — para cadastrar a equipe e configurar o e-mail
+  // Configuração inicial: enquanto o e-mail (SMTP) não está configurado e testado, não há como mandar
+  // o código de 2FA. Todos entram só com a senha (registrado na auditoria) e a tela Integração avisa o TI.
   if (await initialSetupMode()) {
-    const initialAdmin = (process.env.ADMIN_EMAIL || '').trim().toLowerCase() === String(user.email).toLowerCase();
-    if (!isDeveloperEmail(user.email) && !initialAdmin) {
-      await anonAudit(req, user, 'LOGIN_FAILED', 'DENIED', 'Sistema em configuração inicial (e-mail ainda não configurado).');
-      throw new HttpError(503, 'O RASTRO ainda está sendo configurado pela equipe de TI. Tente novamente mais tarde.');
-    }
     await createSession(user.id, null, req, res);
     await anonAudit(req, user, 'LOGIN_INITIAL_SETUP', 'SUCCESS', 'Entrada sem 2FA: o e-mail (SMTP) ainda não foi configurado e testado.');
     return res.json({ ok: true, initialSetupMode: true });

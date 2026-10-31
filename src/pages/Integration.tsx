@@ -1,5 +1,5 @@
-import { FormEvent, ReactNode, useEffect, useState } from 'react';
-import { Lock, RefreshCw, CloudDownload, Mail, ShieldCheck, UserCog, Map as MapIcon, Target, FileCode2, CheckCircle2, XCircle } from 'lucide-react';
+import { ReactNode, useEffect, useState } from 'react';
+import { RefreshCw, CloudDownload, Mail, ShieldCheck, UserCog, Map as MapIcon, Target, FileCode2, CheckCircle2, XCircle } from 'lucide-react';
 import { ApiError, get, post, put } from '../lib/api';
 import { useLoad } from '../lib/useLoad';
 import { bytes, dateTime } from '../lib/format';
@@ -9,36 +9,7 @@ import { Badge, Button, Card, ErrorBox, Field, Input, Modal, Notice, PageHeader,
 const SOURCE: Record<string, string> = { database: 'Banco', env: '.env', default: 'Padrão' };
 
 export default function Integration() {
-  const access = useLoad((s) => get('/api/integration/access', s), []);
-  const [unlocked, setUnlocked] = useState(false);
-  useEffect(() => { if (access.data?.unlocked) setUnlocked(true); }, [access.data]);
-  if (!access.data) return <Spinner />;
-  if (!unlocked) return <Reauth onOk={() => setUnlocked(true)} />;
-  return <IntegrationBody onExpired={() => setUnlocked(false)} />;
-}
-
-function Reauth({ onOk }: { onOk: () => void }) {
-  const [pw, setPw] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true); setError(null);
-    try { await post('/api/auth/reauth', { password: pw }); onOk(); } catch (err) { setError(err instanceof ApiError ? err.message : 'Erro.'); } finally { setBusy(false); }
-  }
-  return (
-    <div className="max-w-sm mx-auto mt-10">
-      <Card>
-        <form onSubmit={submit} className="space-y-4 text-center">
-          <Lock className="size-8 mx-auto text-accent-ink" />
-          <div><h1 className="font-semibold text-ink">Área restrita</h1><p className="text-sm text-ink-3 mt-1">Confirme a sua senha. O acesso vale por 10 minutos.</p></div>
-          {error && <ErrorBox>{error}</ErrorBox>}
-          <Input type="password" autoFocus autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} aria-label="Senha" />
-          <Button type="submit" variant="primary" className="w-full" loading={busy} disabled={!pw}>Continuar</Button>
-        </form>
-      </Card>
-    </div>
-  );
+  return <IntegrationBody onExpired={() => {}} />;
 }
 
 function Section({ icon, title, children, actions }: { icon: ReactNode; title: string; children: ReactNode; actions?: ReactNode }) {
@@ -116,7 +87,7 @@ function IntegrationBody({ onExpired }: { onExpired: () => void }) {
     <div className="space-y-5 max-w-5xl">
       <PageHeader title="Integração" subtitle="Exclusivo do desenvolvedor. Valores vazios voltam para o .env ou para o padrão." />
       {!d.encryptionKeyConfigured && <Notice tone="warn">A SETTINGS_ENCRYPTION_KEY não está configurada no servidor: senhas e segredos não podem ser salvos por esta tela.</Notice>}
-      {d.initialSetupMode && <Notice tone="warn">Modo de configuração inicial: o código por e-mail (2FA) ainda não está valendo. Configure o e-mail abaixo e envie o e-mail de teste para ativá-lo para todos.</Notice>}
+      {d.initialSetupMode && <Notice tone="warn">Modo de configuração inicial: o código por e-mail (2FA) ainda não está valendo e <strong>todos entram só com a senha</strong>. Configure o e-mail abaixo e envie o e-mail de teste para ativá-lo para todos.</Notice>}
 
       <UpdatePanel onExpired={onExpired} />
 
@@ -173,7 +144,6 @@ function UpdatePanel({ onExpired }: { onExpired: () => void }) {
   const [check, setCheck] = useState(false);
   const st = useLoad((s) => get(`/api/system-update/status${check ? '?check=true' : ''}`, s), [check]);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -185,7 +155,7 @@ function UpdatePanel({ onExpired }: { onExpired: () => void }) {
 
   async function request() {
     setBusy(true);
-    try { await post('/api/system-update', { password: pw }); setConfirmOpen(false); setPw(''); toast('ok', 'Atualização iniciada.'); st.reload(true); }
+    try { await post('/api/system-update', {}); setConfirmOpen(false); toast('ok', 'Atualização iniciada.'); st.reload(true); }
     catch (err) { toast('error', err instanceof ApiError ? err.message : 'Não foi possível iniciar.'); } finally { setBusy(false); }
   }
 
@@ -199,6 +169,7 @@ function UpdatePanel({ onExpired }: { onExpired: () => void }) {
       </>}>
       {!d ? <Spinner /> : (
         <div className="space-y-3 text-sm">
+          {d.installed && d.autoUpdate && <Notice tone="ok">Atualização automática ligada: depois do merge de um Pull Request na {d.branch}, o sistema se atualiza sozinho em até 1 minuto e as telas abertas recarregam.</Notice>}
           {!d.installed && <Notice tone="warn">A atualização automática ainda não foi instalada nesta VPS. Rode uma vez, na pasta do projeto: <code>sudo bash scripts/install-auto-update.sh</code></Notice>}
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="rounded-xl border border-line p-3"><div className="text-xs text-ink-3">Versão rodando</div><div className="text-ink">{d.current ? `${d.current.short} · ${d.current.message}` : 'Desconhecida'}</div><div className="text-xs text-ink-3">{d.current && dateTime(d.current.date)}</div></div>
@@ -222,10 +193,9 @@ function UpdatePanel({ onExpired }: { onExpired: () => void }) {
         </div>
       )}
       <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Atualizar o sistema"
-        footer={<><Button variant="ghost" onClick={() => setConfirmOpen(false)}>Cancelar</Button><Button variant="primary" loading={busy} disabled={!pw} onClick={request}>Atualizar agora</Button></>}>
+        footer={<><Button variant="ghost" onClick={() => setConfirmOpen(false)}>Cancelar</Button><Button variant="primary" loading={busy} onClick={request}>Atualizar agora</Button></>}>
         <div className="space-y-3 text-sm text-ink-2">
           <p>O sistema vai baixar a versão {d?.latest?.short} da main, gerar a versão nova, reiniciar e testar. Se algo falhar, volta sozinho para a versão atual. As telas abertas recarregam ao final.</p>
-          <Field label="Confirme a sua senha"><Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoFocus /></Field>
         </div>
       </Modal>
     </Section>

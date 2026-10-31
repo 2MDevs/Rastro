@@ -93,3 +93,9 @@ Marque cada item só depois de testar de verdade. Para cada teste, registre: **d
 - [ ] Ao encerrar, a notificação some depois que os últimos pontos são enviados.
 - [ ] Com o PIN do RASTRO bloqueado, os pontos continuam chegando.
 - [ ] Em celular com economia de bateria agressiva (Xiaomi, Samsung, Motorola), o botão de liberar bateria aparece e funciona.
+
+## Atualização automática
+
+- [ ] Fazer merge de um Pull Request e, sem clicar em nada, conferir que em até 2 minutos a Integração mostra a versão nova.
+- [ ] Com o RASTRO aberto em outra aba, conferir que a tela recarrega sozinha e aparece "O RASTRO foi atualizado".
+- [ ] Divulgador consegue entrar mesmo antes de configurar o e-mail.
