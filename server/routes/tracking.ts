@@ -6,7 +6,7 @@ import { audit } from '../audit';
 import { requireAuth, requireCapability, userOf, newId, sha256 } from '../auth/core';
 import { assertStoreAccess, can, hasStoreAccess, scopeSql, storeLabel, SessionUser } from '../access';
 import { getInt } from '../settings';
-import { sessionTrack, scheduleCoverage, trackParams } from '../services/coverage';
+import { sessionTrack, scheduleCoverage, displayTrackParams } from '../services/coverage';
 import { buildTrack } from '../services/geo';
 import { broadcast } from '../services/realtime';
 import { emitWebhook } from '../services/webhooks';
@@ -348,7 +348,7 @@ trackingRouter.get('/sessions', h(async (req, res) => {
 trackingRouter.get('/sessions/:id', h(async (req, res) => {
   const user = userOf(req);
   const r = await loadSession(user, req.params.id);
-  const params = await trackParams();
+  const params = await displayTrackParams();
   const track = await sessionTrack(r.id, params);
   const { rows: rejectedRows } = await pool.query(
     `SELECT reject_reason, COUNT(*)::int AS n FROM gps_points WHERE session_id = $1 AND NOT accepted GROUP BY reject_reason`, [r.id]
@@ -411,7 +411,7 @@ trackingRouter.get('/routes', requireCapability('tracking.view'), h(async (req, 
   const params: unknown[] = [];
   const where = sessionFilters(user, req.query, params);
   const { rows } = await pool.query(`${SESSION_SQL} WHERE ${where} ORDER BY t.started_at DESC LIMIT 200`, params);
-  const tp = await trackParams();
+  const tp = await displayTrackParams();
   const ids = rows.map((r) => r.id);
   const { rows: pts } = ids.length
     ? await pool.query(`SELECT session_id, lat, lng, accuracy_m, captured_at, accepted FROM gps_points WHERE session_id = ANY($1::text[]) ORDER BY session_id, captured_at, id`, [ids])

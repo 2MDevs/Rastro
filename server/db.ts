@@ -22,6 +22,9 @@ export const pool = new pg.Pool({
   max: Number(process.env.DATABASE_POOL_MAX || 15),
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
+  // Fuso da operação: filtros por dia ("hoje", "até 30/10") seguem o horário de Brasília, não o UTC.
+  // Sem isso, um percurso iniciado depois das 21h ficava fora do filtro "até hoje".
+  options: `-c timezone=${(process.env.APP_TIMEZONE || 'America/Sao_Paulo').replace(/[^A-Za-z0-9_/+-]/g, '')}`,
 });
 
 pool.on('error', (err) => {

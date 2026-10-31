@@ -55,6 +55,10 @@ export const SETTINGS: Record<string, SettingDef> = {
     label: 'Precisão mínima do GPS para contar (metros)', group: 'coverage', kind: 'int', default: '30', min: 5, max: 200,
     help: 'Pontos com precisão pior que isto não entram no cálculo. Valor inicial: calibrar no piloto.',
   },
+  TRACK_DISPLAY_MAX_ACCURACY_M: {
+    label: 'Precisão mínima do GPS para desenhar o percurso no mapa (metros)', group: 'coverage', kind: 'int', default: '65', min: 5, max: 500,
+    help: 'Só para mostrar o caminho no mapa. A cobertura das ruas continua usando a precisão mínima acima, mais rigorosa.',
+  },
   COVERAGE_BUFFER_M: {
     label: 'Distância máxima entre o percurso e a rua (metros)', group: 'coverage', kind: 'int', default: '25', min: 5, max: 100,
     help: 'Um trecho de rua conta como percorrido quando o percurso passou a até esta distância. Valor inicial: calibrar no piloto.',
