@@ -33,3 +33,11 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - A tela **Integração** não pede mais a senha de novo (continua exclusiva do Desenvolvedor). O botão "Atualizar" também não pede senha.
 - **Atualização automática**: o sistema confere o GitHub a cada 30 segundos e, quando há versão nova na main (merge de um Pull Request), se atualiza sozinho, com a mesma volta automática se algo falhar. Para desligar: `AUTO_UPDATE=false` no `.env`.
 - Depois da atualização, **as telas abertas recarregam sozinhas** e mostram o aviso "O RASTRO foi atualizado". Durante um rastreamento pelo navegador, a tela espera o rastreamento terminar.
+
+## Percurso em roxo no Mapa e no Painel da loja
+
+- O percurso do divulgador agora aparece como uma **linha roxa grossa** (com contorno) do início ao fim do rastreamento, destacando as ruas por onde ele passou.
+- **Painel da loja** passou a mostrar os percursos da loja (últimos 30 dias) e quem está em campo agora.
+- **Mapa**: já abre com todas as lojas do perfil marcadas (antes, na Matriz, nada aparecia até escolher uma loja) e a linha vai sendo desenhada **ao vivo** enquanto o divulgador anda.
+- Correção: percursos iniciados depois das 21h (horário de Brasília) não entravam no filtro "até hoje", porque o banco comparava as datas em UTC. Agora os filtros por dia usam o horário de Brasília (`APP_TIMEZONE` no `.env` para trocar).
+- Nova configuração em Integração: **precisão mínima do GPS para desenhar o percurso** (padrão 65 m). A cobertura das ruas continua usando a regra mais rigorosa (30 m).

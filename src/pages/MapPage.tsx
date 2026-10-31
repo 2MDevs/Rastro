@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { X, Store as StoreIcon, Route as RouteIcon, Clock, Target, SlidersHorizontal, ChevronRight, MapPin } from 'lucide-react';
 import { get, qs } from '../lib/api';
@@ -31,10 +31,13 @@ export default function MapPage() {
   const [panelOpen, setPanelOpen] = useState(true);
   const [fitKey, setFitKey] = useState(0);
 
-  // Loja: já começa com as próprias lojas. Matriz: escolhe quais lojas detalhar (evita mostrar tudo de uma vez).
+  // Já começa mostrando todas as lojas visíveis para o perfil (a Matriz pode desmarcar no painel)
+  const autoSelected = useRef(false);
   useEffect(() => {
-    if (!matrix && stores.length && !selectedStores.length) setSelectedStores(stores.map((s) => s.id));
-  }, [matrix, stores]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (autoSelected.current || !stores.length) return;
+    autoSelected.current = true;
+    if (!selectedStores.length) setSelectedStores(stores.map((s) => s.id));
+  }, [stores]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(layers)); } catch { /* ok */ } }, [layers]);
 
   const storeKey = selectedStores.join(',');
@@ -47,9 +50,22 @@ export default function MapPage() {
   const live = useLoad((s) => get<SessionInfo[]>(`/api/tracking/live`, s), []);
   const dash = useLoad((s) => selectedStores.length === 1 ? get(`/api/reports/dashboard${qs({ storeId: selectedStores[0], from: period.from, to: period.to })}`, s) : Promise.resolve(null), [storeKey, period.from, period.to]);
 
+  // Ao vivo: a linha do percurso vai crescendo enquanto o divulgador anda (no máximo uma busca a cada 8 s)
+  const lastRoutesReload = useRef(0);
+  const pendingRoutesReload = useRef<number | null>(null);
+  const reloadRoutesSoon = () => {
+    const wait = Math.max(0, 8000 - (Date.now() - lastRoutesReload.current));
+    if (pendingRoutesReload.current !== null) return;
+    pendingRoutesReload.current = window.setTimeout(() => {
+      pendingRoutesReload.current = null;
+      lastRoutesReload.current = Date.now();
+      routes.reload(true);
+    }, wait);
+  };
+  useEffect(() => () => { if (pendingRoutesReload.current !== null) clearTimeout(pendingRoutesReload.current); }, []);
   useRealtime('tracking', (ev) => {
     live.reload(true);
-    if (ev?.type === 'session') routes.reload(true);
+    if (ev?.type === 'session' || ev?.type === 'position') reloadRoutesSoon();
   }, [storeKey, campaignId, period.from, period.to]);
   useRealtime('data', (ev) => {
     if (ev?.kind === 'areas') areas.reload(true);
@@ -68,6 +84,14 @@ export default function MapPage() {
     type: 'Feature', geometry: { type: 'Point', coordinates: [s.lastPosition!.lng, s.lastPosition!.lat] },
     properties: { sessionId: s.id, userName: s.userName, campaignName: s.campaignName, storeName: s.storeName, accuracyM: s.lastPosition!.accuracyM, stale: s.state === 'NO_COMMUNICATION', lastAt: s.lastPointReceivedAt },
   })), [live.data, storeKey, campaignId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reserva, se a conexão ao vivo falhar: com alguém em campo, atualiza o percurso a cada 20 s
+  const someoneLive = (live.data ?? []).some((x) => !has || sel.has(x.storeId));
+  useEffect(() => {
+    if (!someoneLive) return;
+    const t = setInterval(() => { live.reload(true); routes.reload(true); }, 20_000);
+    return () => clearInterval(t);
+  }, [someoneLive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const mapStores = stores.map((s) => ({ id: s.id, name: s.name, code: s.code, location: s.location, selected: sel.has(s.id) }));
   const coverageKnown = (streets.data?.features ?? []).some((f: any) => f.properties.status);

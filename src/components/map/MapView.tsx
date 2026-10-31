@@ -25,9 +25,9 @@ export const MAP_COLORS = {
   streetPartial: '#F2A541',
   streetDone: '#4CC38A',
   streetCandidate: '#9C9A92',
-  route: '#5AA9F0',
+  route: '#9333EA', // roxo: percurso feito pelo divulgador
   poi: '#B48CF2',
-  live: '#5AA9F0',
+  live: '#6D28D9',
   draw: '#F6D35C',
 };
 
@@ -176,9 +176,14 @@ export function MapView(props: MapViewProps) {
         'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2.5, 16, 5], 'line-opacity': 0.95,
       },
     });
+    // Percurso: contorno claro por baixo + linha roxa grossa, para destacar a rua percorrida do início ao fim
+    m.addLayer({
+      id: 'routes-casing', type: 'line', source: 'rs-routes', layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': theme === 'dark' ? '#1D1D1B' : '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 4, 14, 8, 17, 14], 'line-opacity': 0.85 },
+    });
     m.addLayer({
       id: 'routes-line', type: 'line', source: 'rs-routes', layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': MAP_COLORS.route, 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2, 16, 3.5], 'line-opacity': 0.9 },
+      paint: { 'line-color': MAP_COLORS.route, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2.5, 14, 5, 17, 9], 'line-opacity': 0.95 },
     });
     m.addLayer({ id: 'pois-circle', type: 'circle', source: 'rs-pois', paint: { 'circle-radius': 6, 'circle-color': MAP_COLORS.poi, 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1.5 } });
     m.addLayer({ id: 'pois-label', type: 'symbol', source: 'rs-pois', minzoom: 14,

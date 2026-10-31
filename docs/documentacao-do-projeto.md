@@ -66,9 +66,9 @@ O mapa é o centro do sistema. Painel lateral **Camadas de exibição**, cada um
 | Unidade (loja) | Marcador amarelo com o símbolo RASTRO | Localização cadastrada da loja |
 | Área de cobertura | Amarelo translúcido com borda tracejada | Alcance configurado (raio ou perímetro) |
 | Ruas anunciadas | Amarelo (não percorrida), laranja (parcial), verde (percorrida) | Ruas planejadas e a situação no último cálculo |
-| Percursos realizados | Linha azul contínua | Trechos válidos registrados pelo GPS (falhas de sinal não são ligadas) |
+| Percursos realizados | Linha roxa grossa | Caminho feito pelo divulgador do início ao fim do rastreamento (falhas de sinal não são ligadas). Aparece no Mapa, no Painel da loja e no detalhe do percurso, e vai sendo desenhado ao vivo |
 | Pontos de interesse | Círculo roxo | Condomínios, comércios, pontos de apoio etc. |
-| Em campo agora | Ponto azul (cinza = sem comunicação) | Última posição de quem está rastreando |
+| Em campo agora | Ponto roxo (cinza = sem comunicação) | Última posição de quem está rastreando |
 
 A legenda muda conforme as camadas ligadas. Ao clicar numa loja, rua, percurso, área ou ponto, abre um painel de detalhes (um de cada vez). Na Matriz, o usuário escolhe quais lojas detalhar, para não mostrar tudo de todas as lojas ao mesmo tempo. Filtros: campanha e período dos percursos. Com uma loja escolhida, a faixa do topo mostra área de cobertura, percurso realizado e tempo em campo.
 

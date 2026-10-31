@@ -14,6 +14,12 @@ export async function trackParams(): Promise<TrackParams> {
   };
 }
 
+/** Para desenhar o percurso no mapa: aceita GPS um pouco menos preciso que o cálculo de cobertura */
+export async function displayTrackParams(): Promise<TrackParams> {
+  const base = await trackParams();
+  return { ...base, maxAccuracyM: Math.max(base.maxAccuracyM, await getInt('TRACK_DISPLAY_MAX_ACCURACY_M')) };
+}
+
 export async function coverageParams() {
   return {
     bufferM: await getInt('COVERAGE_BUFFER_M'),

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, MapPin, Crosshair, Users as UsersIcon, UserPlus, Link2, X, Megaphone, Route as RouteIcon, Clock, Target, Radio, Smartphone, Share2 } from 'lucide-react';
 import { shareApp } from '../lib/nativeApp';
@@ -7,8 +7,8 @@ import { useAuth } from '../lib/auth';
 import { useLoad } from '../lib/useLoad';
 import { useRealtime } from '../lib/events';
 import { dateTime, distance, duration, pct, relative } from '../lib/format';
-import type { Area, Store } from '../lib/types';
-import { MapView, MapFeature } from '../components/map/MapView';
+import type { Area, SessionInfo, Store } from '../lib/types';
+import { MapView, MapFeature, MAP_COLORS } from '../components/map/MapView';
 import { StoreLocationCapture } from '../components/StoreLocationCapture';
 import { invalidateStores, defaultPeriod } from '../components/filters';
 import { useToast } from '../components/toast';
@@ -31,6 +31,31 @@ export default function StorePanel() {
   const [linkId, setLinkId] = useState('');
   const [creating, setCreating] = useState(false);
   useRealtime('data', (ev) => { if (ev?.storeId === id) { store.reload(true); dash.reload(true); } }, [id]);
+
+  // Percursos da loja (linha roxa) e quem está em campo agora, atualizando ao vivo
+  const routes = useLoad((sig) => can('tracking.view') ? get(`/api/tracking/routes${qs({ storeIds: [id], from: period.from, to: period.to })}`, sig) : Promise.resolve({ features: [] }), [id]);
+  const live = useLoad((sig) => get<SessionInfo[]>(`/api/tracking/live`, sig), [id]);
+  const lastReload = useRef(0);
+  const timer = useRef<number | null>(null);
+  useRealtime('tracking', (ev) => {
+    live.reload(true);
+    if (timer.current !== null) return;
+    timer.current = window.setTimeout(() => {
+      timer.current = null; lastReload.current = Date.now();
+      routes.reload(true); if (ev?.type === 'session') dash.reload(true);
+    }, Math.max(0, 8000 - (Date.now() - lastReload.current)));
+  }, [id]);
+  const liveHere = (live.data ?? []).filter((x) => x.storeId === id && x.lastPosition);
+  useEffect(() => {
+    if (!liveHere.length) return;
+    const t = setInterval(() => { live.reload(true); routes.reload(true); }, 20_000);
+    return () => { clearInterval(t); if (timer.current !== null) { clearTimeout(timer.current); timer.current = null; } };
+  }, [liveHere.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+  const liveFeatures: MapFeature[] = useMemo(() => liveHere.map((x) => ({
+    type: 'Feature', geometry: { type: 'Point', coordinates: [x.lastPosition!.lng, x.lastPosition!.lat] },
+    properties: { sessionId: x.id, userName: x.userName, campaignName: x.campaignName, storeName: x.storeName, accuracyM: x.lastPosition!.accuracyM, stale: x.state === 'NO_COMMUNICATION', lastAt: x.lastPointReceivedAt },
+  })), [live.data, id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const routeFeatures: MapFeature[] = (routes.data as any)?.features ?? [];
 
   if (store.error) return <ErrorBox onRetry={() => store.reload()}>{store.error}</ErrorBox>;
   const s = store.data;
@@ -77,7 +102,13 @@ export default function StorePanel() {
         <div className="space-y-5">
           <Card padded={false} className="overflow-hidden">
             <MapView className="h-[420px]" stores={s.location ? [{ id: s.id, name: s.name, code: s.code, location: s.location, selected: true }] : []}
-              areas={areaFeatures} fitKey={`${s.id}-${s.location?.lat}-${areaFeatures.length}`} visible={{ streets: false, routes: false, pois: false, live: false }} />
+              areas={areaFeatures} routes={routeFeatures} live={liveFeatures}
+              fitKey={`${s.id}-${s.location?.lat}-${areaFeatures.length}-${routeFeatures.length > 0}`} visible={{ streets: false, pois: false }} />
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-4 py-2.5 border-t border-line text-xs text-ink-3">
+              <span className="inline-flex items-center gap-2"><span className="inline-block h-1.5 w-6 rounded-full" style={{ background: MAP_COLORS.route }} />Percursos dos divulgadores (últimos 30 dias): {routeFeatures.length}</span>
+              <span className="inline-flex items-center gap-2"><span className="inline-block size-2.5 rounded-full" style={{ background: MAP_COLORS.live }} />Em campo agora: {liveFeatures.length}</span>
+              {!can('tracking.view') && <span>Seu perfil não visualiza percursos de outras pessoas.</span>}
+            </div>
           </Card>
           <Card padded={false}>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 p-5">
