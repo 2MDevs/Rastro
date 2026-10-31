@@ -16,3 +16,13 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - Novo perfil **Gestor da franquia**, cadastrado pelo Administrador: vê todas as lojas e todos os percursos, cadastra lojas e as pessoas de cada loja.
 - Novo **Painel da loja**, com mapa, indicadores e pessoas da loja.
 - **Localização da loja pelo GPS**, registrada de dentro da loja, com orientação na tela, conferência no mapa e precisão mínima.
+
+## App Android do RASTRO (rastreamento em segundo plano)
+
+- Novo **aplicativo Android** para o divulgador: abre o Modo campo, e depois de tocar em **Iniciar** registra o percurso **com a tela apagada e o celular no bolso** (serviço do Android com notificação fixa enquanto rastreia).
+- Sem internet, os pontos ficam guardados no celular e são enviados sozinhos quando a conexão volta, inclusive depois de encerrar.
+- Avisos no próprio app quando falta permissão de localização, o GPS está desligado ou a economia de bateria pode pausar o GPS, com botões para corrigir.
+- Nova página pública **/app** (sem login) com o botão de download e o passo a passo de instalação.
+- Botões **Enviar app** (na lista de usuários e nas pessoas da loja) e **Compartilhar app** no Painel da loja: abrem o compartilhamento do celular ou o WhatsApp com o link pronto.
+- No navegador de celulares Android, o Modo campo agora sugere instalar o app.
+- O APK é gerado automaticamente pelo GitHub a cada atualização da pasta do app e fica sempre no mesmo link: `https://rastro.gestaohummm.com.br/app/rastro.apk`.

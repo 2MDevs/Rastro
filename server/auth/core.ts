@@ -222,7 +222,9 @@ export function requireAuth(opts: AuthOptions = {}) {
       (req as any).reauthAt = row.reauth_at ? new Date(row.reauth_at) : null;
 
       const url = req.originalUrl.split('?')[0];
-      if (row.locked_at && !LOCKED_ALLOWED.has(url)) {
+      // O envio de pontos do rastreamento (app em segundo plano) continua mesmo com a tela bloqueada
+      const trackingUpload = req.method === 'POST' && /^\/api\/tracking\/sessions\/[^/]+\/(points|finish)$/.test(url);
+      if (row.locked_at && !LOCKED_ALLOWED.has(url) && !trackingUpload) {
         throw new HttpError(423, 'A tela está bloqueada por inatividade. Desbloqueie para continuar.', 'SESSION_LOCKED');
       }
       if (user.mustChangePassword && !MUST_CHANGE_ALLOWED.has(url)) {

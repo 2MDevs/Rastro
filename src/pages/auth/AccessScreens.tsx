@@ -22,7 +22,7 @@ export function PasswordRules({ value }: { value: string }) {
 }
 export const passwordOk = (v: string) => v.length >= 10 && /[A-Za-z]/.test(v) && /\d/.test(v);
 
-function Frame({ children }: { children: React.ReactNode }) {
+export function Frame({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-full flex items-center justify-center p-6 bg-bg">
       <div className="w-full max-w-md">

@@ -191,5 +191,6 @@ if __name__ == "__main__":
     build("manual-rapido.md", "RASTRO-Manual-Rapido.pdf", "Manual rápido do usuário", version)
     build("roteiro-de-testes.md", "RASTRO-Roteiro-de-Testes.pdf", "Roteiro de testes", version)
     build("metodologia-cobertura.md", "RASTRO-Metodologia-de-Cobertura.pdf", "Metodologia de cobertura", version)
+    build("app-android.md", "RASTRO-App-Android.pdf", "App Android", version)
     build("notas-de-versao.md", "RASTRO-Notas-de-Versao.pdf", "Notas de versão", version)
     sys.exit(0)

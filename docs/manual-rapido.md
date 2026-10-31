@@ -48,3 +48,10 @@ Lembre-se: o mapa mostra por onde o celular passou. Isso não comprova, sozinho,
 ## Dúvidas ou problemas
 
 Fale com a TI da Hummm! Pizzas. Para sugestões, use o modelo do Roteiro de testes: o que você fez, o que esperava, o que aconteceu e um print da tela.
+
+## App Android (divulgador)
+
+- Para rastrear com a tela apagada, o divulgador usa o **app Android do RASTRO**. O gestor ou gerente toca em **Enviar app** ao lado do divulgador (em Usuários ou no Painel da loja) e manda pelo WhatsApp. O link também pode ser enviado direto: `https://rastro.gestaohummm.com.br/app`.
+- No celular: baixar, abrir o `rastro.apk`, permitir instalar "desta fonte", instalar, entrar com e-mail e senha, permitir localização e notificações.
+- No Modo campo do app, tocar em **Iniciar**: pode apagar a tela e guardar o celular. Uma notificação mostra que está registrando. Para terminar, abrir o app e tocar em **Encerrar rastreamento**.
+- Não feche o app pela lista de aplicativos abertos durante o rastreamento.

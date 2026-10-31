@@ -12,3 +12,8 @@ coverage/
 *.log
 .DS_Store
 .npm/
+android/.gradle/
+android/**/build/
+android/local.properties
+*.jks
+*.keystore

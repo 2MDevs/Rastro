@@ -5,6 +5,7 @@ import { AppShell } from './components/AppShell';
 import { Spinner } from './components/ui';
 import type { Capability } from './lib/types';
 import Login from './pages/auth/Login';
+import AppDownload from './pages/AppDownload';
 import { ForceChangePassword, LockScreen, SetPassword } from './pages/auth/AccessScreens';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -53,6 +54,7 @@ export default function App() {
   const loc = useLocation();
 
   if (loc.pathname === '/definir-senha') return <SetPassword />;
+  if (loc.pathname === '/app') return <AppDownload />;
   if (status === 'loading') return <div className="h-full flex items-center justify-center"><Spinner /></div>;
   if (status === 'anon' || !user) return <Login />;
   if (user.mustChangePassword) return <ForceChangePassword />;

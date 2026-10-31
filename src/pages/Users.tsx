@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
-import { Plus, UserPlus, Pencil, Lock, Unlock, Send, Users as UsersIcon } from 'lucide-react';
+import { Plus, UserPlus, Pencil, Lock, Unlock, Send, Smartphone, Users as UsersIcon } from 'lucide-react';
+import { shareApp } from '../lib/nativeApp';
 import { ApiError, get, patch, post } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useLoad } from '../lib/useLoad';
@@ -46,6 +47,7 @@ export default function Users() {
                 </Td>
                 <Td className="text-xs text-ink-3">{u.lastLoginAt ? relative(u.lastLoginAt) : 'Nunca entrou'}</Td>
                 <Td className="text-right whitespace-nowrap">
+                  {u.role === 'PROMOTER' && u.status === 'ACTIVE' && <Button variant="ghost" icon={<Smartphone className="size-4" />} title="Enviar o link do app Android para o divulgador" onClick={() => shareApp(u.name)}>Enviar app</Button>}
                   <Button variant="ghost" icon={<Pencil className="size-4" />} onClick={() => setEditing(u)}>Editar</Button>
                   {u.id !== me?.id && (u.status === 'BLOCKED'
                     ? <Button variant="ghost" icon={<Unlock className="size-4" />} onClick={() => block(u, false)}>Liberar</Button>
