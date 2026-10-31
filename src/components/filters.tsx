@@ -37,13 +37,13 @@ export const defaultPeriod = (): Period => ({ from: daysAgo(29), to: today() });
 export function PeriodFilter({ value, onChange }: { value: Period; onChange: (p: Period) => void }) {
   const preset = (d: number) => onChange({ from: daysAgo(d - 1), to: today() });
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Input type="date" value={value.from} max={value.to || undefined} onChange={(e) => onChange({ ...value, from: e.target.value })} className="w-auto" aria-label="Data inicial" />
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 w-full sm:w-auto sm:flex sm:flex-wrap">
+      <Input type="date" value={value.from} max={value.to || undefined} onChange={(e) => onChange({ ...value, from: e.target.value })} className="sm:w-auto min-w-0" aria-label="Data inicial" />
       <span className="text-ink-3 text-sm">até</span>
-      <Input type="date" value={value.to} min={value.from || undefined} onChange={(e) => onChange({ ...value, to: e.target.value })} className="w-auto" aria-label="Data final" />
-      <div className="flex gap-1">
+      <Input type="date" value={value.to} min={value.from || undefined} onChange={(e) => onChange({ ...value, to: e.target.value })} className="sm:w-auto min-w-0" aria-label="Data final" />
+      <div className="col-span-3 grid grid-cols-3 gap-1 sm:flex">
         {[7, 30, 90].map((d) => (
-          <button key={d} onClick={() => preset(d)} className="h-10 px-3 rounded-xl text-xs text-ink-2 border border-line hover:border-ink-3">{d} dias</button>
+          <button key={d} onClick={() => preset(d)} className="h-9 sm:h-10 px-3 rounded-xl text-xs text-ink-2 border border-line hover:border-ink-3">{d} dias</button>
         ))}
       </div>
     </div>

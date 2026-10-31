@@ -110,7 +110,7 @@ export default function Territories() {
       ) : (
         <div className="grid lg:grid-cols-[1fr_380px] gap-5">
           <Card padded={false} className="overflow-hidden">
-            <MapView key={storeId} className="h-[560px]" stores={store ? [{ id: store.id, name: store.name, code: store.code, location: store.location }] : []}
+            <MapView key={storeId} className="h-[62dvh] min-h-[340px] sm:h-[560px]" stores={store ? [{ id: store.id, name: store.name, code: store.code, location: store.location }] : []}
               areas={areaFeatures} pois={poiFeatures} fitKey={fitKey}
               drawing={drawing} drawKey={drawKey} onDrawChange={setRing}
               picking={mode?.kind === 'poi'} onPick={(p) => setPoi((x) => ({ ...x, location: p }))} pickMarker={mode?.kind === 'poi' ? poi.location : null} />

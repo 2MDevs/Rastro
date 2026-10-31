@@ -122,7 +122,7 @@ export default function CampaignDetail() {
         </>} />
 
       <Card padded={false} className="mb-5">
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-5 p-5">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-5 p-4 sm:p-5">
           <Stat label="Território" value={camp.area?.name ?? 'A definir'} />
           <Stat label="Ruas planejadas" value={camp.streetsCount ? `${camp.streetsCount}` : 'Nenhuma'} hint={camp.streetsCount ? distance(camp.plannedLengthM) : undefined} />
           <Stat label="Responsáveis" value={camp.assignees.length || 'A definir'} hint={camp.assignees.map((a: any) => a.name.split(' ')[0]).join(', ')} />
@@ -142,7 +142,7 @@ export default function CampaignDetail() {
           <div className="grid xl:grid-cols-[1fr_380px] gap-5">
             <div className="space-y-3">
               <Card padded={false} className="overflow-hidden">
-                <MapView className="h-[560px]" areas={areaFeatures} streets={streetFeatures} candidates={candidateFeatures} routes={routes.data?.features ?? []}
+                <MapView className="h-[62dvh] min-h-[340px] sm:h-[560px]" areas={areaFeatures} streets={streetFeatures} candidates={candidateFeatures} routes={routes.data?.features ?? []}
                   fitKey={`${id}-${areaFeatures.length}-${candidates.length}`}
                   onSelect={(s) => { if (s?.kind === 'candidate' && editable) setSelected((cur) => { const n = new Set(cur); n.has(s.props.key) ? n.delete(s.props.key) : n.add(s.props.key); return n; }); }}
                   visible={{ stores: false, pois: false, live: false }} />

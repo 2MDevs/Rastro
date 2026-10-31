@@ -41,3 +41,11 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - **Mapa**: já abre com todas as lojas do perfil marcadas (antes, na Matriz, nada aparecia até escolher uma loja) e a linha vai sendo desenhada **ao vivo** enquanto o divulgador anda.
 - Correção: percursos iniciados depois das 21h (horário de Brasília) não entravam no filtro "até hoje", porque o banco comparava as datas em UTC. Agora os filtros por dia usam o horário de Brasília (`APP_TIMEZONE` no `.env` para trocar).
 - Nova configuração em Integração: **precisão mínima do GPS para desenhar o percurso** (padrão 65 m). A cobertura das ruas continua usando a regra mais rigorosa (30 m).
+
+## Versão para celular
+
+- **Barra de atalhos embaixo** no celular (Painel, Mapa, Percursos, Campanhas e "Mais"; para o divulgador, Campo e Percursos). O "Mais" abre o menu completo em blocos, com o nome da pessoa e o botão Sair.
+- **Tabelas viram cartões** no celular (Percursos, Campanhas, Unidades, Usuários, Auditoria...): cada informação aparece com o nome ao lado, sem precisar arrastar para o lado.
+- **Mapa no celular**: abre limpo, ocupando a tela; "Camadas e filtros" sobe de baixo e o botão "Ver mapa" fecha. Resumo da loja compacto no topo.
+- Filtros de período mais compactos (datas lado a lado), indicadores sem cortar texto, mapas com altura proporcional à tela, janelas que rolam quando o conteúdo é grande e respeito ao entalhe e à barra de gestos do celular.
+- Campos com letra de 16 px no celular, para o iPhone não dar zoom ao tocar.

@@ -28,7 +28,8 @@ export default function MapPage() {
   const [period, setPeriod] = useState(defaultPeriod());
   const [layers, setLayers] = useState(initialLayers);
   const [selection, setSelection] = useState<Selection | null>(null);
-  const [panelOpen, setPanelOpen] = useState(true);
+  // No celular o mapa abre limpo; o painel de camadas e filtros sobe de baixo quando a pessoa toca em "Camadas"
+  const [panelOpen, setPanelOpen] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
   const [fitKey, setFitKey] = useState(0);
 
   // Já começa mostrando todas as lojas visíveis para o perfil (a Matriz pode desmarcar no painel)
@@ -134,18 +135,34 @@ export default function MapPage() {
           </div>
         )}
 
+        {/* Resumo da loja no celular (a faixa completa aparece só em telas maiores) */}
+        {single && (
+          <div className="md:hidden absolute top-3 left-3 right-14 z-10 rounded-2xl border border-line bg-panel/95 px-3 py-2 shadow-lg">
+            <div className="flex items-center gap-2"><StoreIcon className="size-4 text-accent-ink shrink-0" /><span className="text-sm font-semibold text-ink truncate">{single.name}</span></div>
+            <div className="mt-1 flex gap-3 text-[11px] text-ink-3">
+              <span>Percorrido <strong className="text-ink">{singleDash ? distance(singleDash.distanceM) : '—'}</strong></span>
+              <span>Em campo <strong className="text-ink">{singleDash ? duration(singleDash.fieldSeconds) : '—'}</strong></span>
+              {liveFeatures.length > 0 && <span className="text-accent-ink font-medium">{liveFeatures.length} agora</span>}
+            </div>
+          </div>
+        )}
+
         {!panelOpen && (
-          <Button className="absolute bottom-8 right-3 z-10 lg:hidden" icon={<SlidersHorizontal className="size-4" />} onClick={() => setPanelOpen(true)}>Camadas</Button>
+          <Button variant="primary" className="absolute bottom-5 right-3 z-10 lg:hidden shadow-lg" icon={<SlidersHorizontal className="size-4" />} onClick={() => { setSelection(null); setPanelOpen(true); }}>Camadas e filtros</Button>
         )}
         {selection && <DetailPanel selection={selection} onClose={() => setSelection(null)} stores={stores} campaigns={campaigns.data ?? []} />}
       </div>
 
       {/* Painel lateral */}
-      <aside className={cx('w-full sm:w-[340px] shrink-0 border-l border-line bg-bg overflow-y-auto scroll-thin p-3 space-y-3',
-        'absolute inset-y-0 right-0 z-20 lg:static', panelOpen ? 'block' : 'hidden lg:block')}>
-        <div className="flex items-center justify-between lg:hidden">
-          <span className="text-sm font-semibold">Mapa</span>
-          <IconButton label="Fechar painel" onClick={() => setPanelOpen(false)}><X className="size-5" /></IconButton>
+      {panelOpen && <div className="lg:hidden absolute inset-0 z-20 bg-black/30" onClick={() => setPanelOpen(false)} />}
+      <aside className={cx('shrink-0 bg-bg overflow-y-auto scroll-thin p-3 space-y-3',
+        // celular: folha que sobe de baixo, deixando o topo do mapa à vista; computador: coluna à direita
+        'absolute inset-x-0 bottom-0 max-h-[72%] rounded-t-3xl border-t border-line shadow-2xl z-30',
+        'lg:static lg:max-h-none lg:rounded-none lg:border-t-0 lg:border-l lg:shadow-none lg:w-[340px]',
+        panelOpen ? 'block' : 'hidden lg:block')}>
+        <div className="flex items-center justify-between lg:hidden sticky -top-3 -mx-3 -mt-3 px-4 pt-3 pb-2 bg-bg z-10">
+          <span className="text-sm font-semibold">Camadas e filtros</span>
+          <Button variant="primary" onClick={() => setPanelOpen(false)}>Ver mapa</Button>
         </div>
         <LayerPanel visible={layers} onChange={(k, v) => setLayers((l) => ({ ...l, [k]: v }))}
           counts={{ stores: mapStores.filter((s) => s.location).length, areas: areaFeatures.length, streets: streets.data?.features?.length ?? 0, routes: routes.data?.features?.length ?? 0, pois: poiFeatures.length, live: liveFeatures.length }}

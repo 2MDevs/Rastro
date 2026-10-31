@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState, ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes, forwardRef } from 'react';
+import { ReactNode, useEffect, useLayoutEffect, useRef, useState, ButtonHTMLAttributes, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes, forwardRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, X, AlertTriangle, Inbox } from 'lucide-react';
 
@@ -84,12 +84,12 @@ export function Card({ title, actions, children, className, padded = true }: { t
   return (
     <section className={cx('rounded-2xl bg-panel border border-line', className)}>
       {(title || actions) && (
-        <header className="flex items-center justify-between gap-3 px-5 pt-4 pb-3">
+        <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 sm:px-5 pt-4 pb-3">
           {title && <h2 className="text-sm font-semibold text-ink">{title}</h2>}
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </header>
       )}
-      <div className={cx(padded && 'px-5 pb-5', !title && !actions && padded && 'pt-5')}>{children}</div>
+      <div className={cx(padded && 'px-4 sm:px-5 pb-4 sm:pb-5', !title && !actions && padded && 'pt-4 sm:pt-5')}>{children}</div>
     </section>
   );
 }
@@ -164,7 +164,7 @@ export function Drawer({ open, onClose, title, children, footer, wide }: { open:
           <IconButton label="Fechar" onClick={onClose}><X className="size-5" /></IconButton>
         </header>
         <div className="flex-1 overflow-y-auto scroll-thin p-5">{children}</div>
-        {footer && <footer className="flex items-center justify-end gap-2 px-5 py-4 border-t border-line shrink-0">{footer}</footer>}
+        {footer && <footer className="flex flex-wrap items-center justify-end gap-2 px-5 py-4 border-t border-line shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">{footer}</footer>}
       </aside>
     </div>,
     document.body
@@ -182,13 +182,13 @@ export function Modal({ open, onClose, title, children, footer }: { open: boolea
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/55" onClick={onClose} />
-      <div role="dialog" aria-modal="true" className="relative w-full sm:max-w-md bg-panel border border-line rounded-t-2xl sm:rounded-2xl shadow-2xl">
+      <div role="dialog" aria-modal="true" className="relative w-full sm:max-w-md max-h-[92dvh] overflow-y-auto scroll-thin bg-panel border border-line rounded-t-2xl sm:rounded-2xl shadow-2xl pb-safe">
         <header className="flex items-center justify-between gap-3 px-5 pt-5">
           <h2 className="font-semibold text-ink">{title}</h2>
           {onClose && <IconButton label="Fechar" onClick={onClose}><X className="size-5" /></IconButton>}
         </header>
         <div className="px-5 py-4">{children}</div>
-        {footer && <footer className="flex items-center justify-end gap-2 px-5 pb-5">{footer}</footer>}
+        {footer && <footer className="flex flex-wrap items-center justify-end gap-2 px-5 pb-5 [&>*]:flex-1 sm:[&>*]:flex-none">{footer}</footer>}
       </div>
     </div>,
     document.body
@@ -229,12 +229,12 @@ export function Tabs<T extends string>({ value, onChange, items }: { value: T; o
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
-      <div>
-        <h1 className="text-xl font-semibold text-ink">{title}</h1>
-        {subtitle && <p className="text-sm text-ink-3 mt-0.5">{subtitle}</p>}
+    <div className="flex flex-wrap items-end justify-between gap-3 mb-4 sm:mb-5">
+      <div className="min-w-0">
+        <h1 className="text-lg sm:text-xl font-semibold text-ink">{title}</h1>
+        {subtitle && <p className="text-xs sm:text-sm text-ink-3 mt-0.5">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none [&_button]:w-full sm:[&_button]:w-auto">{actions}</div>}
     </div>
   );
 }
@@ -242,11 +242,11 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 export function Stat({ label, value, hint, icon }: { label: string; value: ReactNode; hint?: ReactNode; icon?: ReactNode }) {
   return (
     <div className="flex items-start gap-3 min-w-0">
-      {icon && <div className="size-9 shrink-0 rounded-xl bg-panel-2 border border-line flex items-center justify-center text-accent-ink">{icon}</div>}
+      {icon && <div className="size-8 sm:size-9 shrink-0 rounded-xl bg-panel-2 border border-line flex items-center justify-center text-accent-ink">{icon}</div>}
       <div className="min-w-0">
-        <div className="text-[11px] uppercase tracking-wide text-ink-3">{label}</div>
-        <div className="text-lg font-semibold text-ink tabular truncate">{value}</div>
-        {hint && <div className="text-xs text-ink-3 truncate">{hint}</div>}
+        <div className="text-[10.5px] sm:text-[11px] uppercase tracking-wide text-ink-3 leading-tight">{label}</div>
+        <div className="text-base sm:text-lg font-semibold text-ink tabular leading-snug break-words sm:truncate">{value}</div>
+        {hint && <div className="text-[11px] sm:text-xs text-ink-3 line-clamp-2 sm:truncate">{hint}</div>}
       </div>
     </div>
   );
@@ -254,8 +254,24 @@ export function Stat({ label, value, hint, icon }: { label: string; value: React
 
 /** Tabela simples e responsiva */
 export function Table({ head, children, empty }: { head: ReactNode[]; children: ReactNode; empty?: ReactNode }) {
+  // No celular a tabela vira cartões: cada célula recebe o nome da coluna (data-label) para aparecer ao lado do valor
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const label = () => {
+      const names = [...el.querySelectorAll('thead th')].map((th) => (th.textContent || '').trim());
+      el.querySelectorAll('tbody > tr').forEach((tr) => {
+        [...tr.children].forEach((td, i) => { if (td.getAttribute('data-label') !== (names[i] ?? '')) td.setAttribute('data-label', names[i] ?? ''); });
+      });
+    };
+    label();
+    const mo = new MutationObserver(label);
+    mo.observe(el, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, []);
   return (
-    <div className="overflow-x-auto scroll-thin">
+    <div ref={ref} className="rt overflow-x-auto scroll-thin">
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-wide text-ink-3 border-b border-line">
