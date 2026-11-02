@@ -49,3 +49,12 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - **Mapa no celular**: abre limpo, ocupando a tela; "Camadas e filtros" sobe de baixo e o botão "Ver mapa" fecha. Resumo da loja compacto no topo.
 - Filtros de período mais compactos (datas lado a lado), indicadores sem cortar texto, mapas com altura proporcional à tela, janelas que rolam quando o conteúdo é grande e respeito ao entalhe e à barra de gestos do celular.
 - Campos com letra de 16 px no celular, para o iPhone não dar zoom ao tocar.
+
+## Mapa abrindo mais rápido
+
+- O mapa abre **já na região da loja** (ou na última região vista no aparelho), em vez de abrir no Brasil inteiro e depois "voar" até a rua — antes ele baixava o mapa duas vezes.
+- A configuração do mapa fica guardada no aparelho: o mapa começa a carregar na hora, sem esperar o servidor.
+- **Os blocos do mapa ficam guardados no celular/computador** (até cerca de 4.000 blocos): da segunda vez em diante, a região já vista abre quase instantânea, inclusive no app.
+- A conexão com o servidor do mapa é aberta antes de precisar dele, e o código do mapa é baixado em segundo plano logo que o RASTRO abre.
+- No Painel, o mapa não espera mais os números do painel para aparecer.
+- Em celulares com tela de alta densidade, o mapa desenha com até 2× de resolução (mais leve, sem diferença visível).

@@ -7,7 +7,7 @@ import { useLoad } from '../lib/useLoad';
 import { useRealtime } from '../lib/events';
 import { distance, duration, num, pct, relative } from '../lib/format';
 import { Badge, Button, Card, EmptyState, ErrorBox, PageHeader, Spinner, Stat, Table, Td } from '../components/ui';
-import { PeriodFilter, StoreSelect, defaultPeriod } from '../components/filters';
+import { PeriodFilter, StoreSelect, defaultPeriod, useStores } from '../components/filters';
 import { MapView, MapFeature } from '../components/map/MapView';
 import type { SessionInfo } from '../lib/types';
 
@@ -28,7 +28,8 @@ export default function Dashboard() {
     type: 'Feature', geometry: { type: 'Point', coordinates: [s.lastPosition!.lng, s.lastPosition!.lat] },
     properties: { sessionId: s.id, userName: s.userName, campaignName: s.campaignName, accuracyM: s.lastPosition!.accuracyM, stale: s.state === 'NO_COMMUNICATION' },
   })), [live.data]);
-  const storesForMap = (d?.stores ?? []).map((s: any) => ({ id: s.id, name: s.name, code: s.code, location: s.location }));
+  const { stores: allStores } = useStores();
+  const storesForMap = (d?.stores ?? allStores.filter((s) => !storeId || s.id === storeId)).map((s: any) => ({ id: s.id, name: s.name, code: s.code, location: s.location }));
   const t = d?.totals;
   const single = d && d.stores.length === 1 ? d.stores[0] : null;
 
@@ -65,13 +66,17 @@ export default function Dashboard() {
                 hint={t.coverage.percent === null ? 'faltam ruas planejadas ou dados de GPS' : `${distance(t.coverage.coveredM)} de ${distance(t.coverage.plannedM)} planejados`} />
             </div>
           </Card>
+        </div>
+      )}
 
+      {/* O mapa não espera os números do painel: abre junto com a tela */}
+      <div className={d ? 'mt-5' : 'mt-4'}>
           <div className="grid xl:grid-cols-[1fr_360px] gap-5">
             <Card title="Mapa da operação" padded={false} actions={<Link to="/mapa"><Button variant="ghost" icon={<MapPinned className="size-4" />}>Abrir mapa completo</Button></Link>}>
               <MapView className="h-[300px] sm:h-[420px] rounded-b-2xl" stores={storesForMap} live={liveFeatures} fitKey={`${storeId}-${storesForMap.length}`}
                 visible={{ areas: false, streets: false, routes: false, pois: false }}
                 onSelect={(s) => s?.kind === 'store' ? setStoreId(s.props.id) : s?.kind === 'live' ? navigate(`/percursos/${s.props.sessionId}`) : null} />
-              {storesForMap.every((s: any) => !s.location) && (
+              {d && storesForMap.every((s: any) => !s.location) && (
                 <p className="px-5 py-3 text-xs text-ink-3 border-t border-line">Nenhuma loja tem localização definida ainda. Cadastre o endereço em Unidades para vê-las no mapa.</p>
               )}
             </Card>
@@ -95,6 +100,10 @@ export default function Dashboard() {
             </Card>
           </div>
 
+      </div>
+
+      {d && t && (
+        <div className="space-y-5 mt-5">
           {d.stores.length > 0 ? (
             <Card title={d.stores.length > 1 ? 'Comparação entre lojas' : 'Resumo da loja'} padded={false}
               actions={can('reports.view') && <a href={`/api/reports/stores${qs({ storeId, from: period.from, to: period.to, format: 'csv' })}`}><Button variant="ghost" icon={<Download className="size-4" />}>CSV</Button></a>}>

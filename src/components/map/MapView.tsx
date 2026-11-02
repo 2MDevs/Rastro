@@ -66,6 +66,37 @@ export interface MapViewProps {
 let protocolAdded = false;
 const DEFAULT_CENTER: [number, number] = [-47.9, -15.8]; // Brasil (até haver dados)
 
+/*
+ * Para o mapa abrir rápido:
+ * - a configuração do mapa fica guardada (memória + aparelho) e o mapa começa a carregar na hora,
+ *   conferindo a configuração em segundo plano;
+ * - o mapa abre na última região vista (ou na loja), em vez de abrir no Brasil inteiro e depois "voar"
+ *   até a rua — o que baixava os blocos do mapa duas vezes.
+ */
+const CFG_KEY = 'rastro-mapa-config';
+const VIEW_KEY = 'rastro-mapa-vista';
+let cfgMemory: any = null;
+let cfgRequest: Promise<any> | null = null;
+function cachedCfg(): any {
+  if (cfgMemory) return cfgMemory;
+  try { const s = localStorage.getItem(CFG_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+}
+function loadCfg(): Promise<any> {
+  cfgRequest ??= get('/api/map/config').then((c) => {
+    cfgMemory = c;
+    try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch { /* sem armazenamento */ }
+    return c;
+  }).finally(() => { setTimeout(() => { cfgRequest = null; }, 60_000); });
+  return cfgRequest;
+}
+const sameBasemap = (a: any, b: any) => JSON.stringify(a?.basemap ?? null) === JSON.stringify(b?.basemap ?? null);
+function lastView(): { center: [number, number]; zoom: number } | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null');
+    return v && Array.isArray(v.center) && Number.isFinite(v.zoom) ? v : null;
+  } catch { return null; }
+}
+
 const fc = (features: MapFeature[] = []) => ({ type: 'FeatureCollection' as const, features });
 
 function styleFor(cfg: any, theme: Theme): string | StyleSpecification {
@@ -99,7 +130,9 @@ function buildStyle(cfg: any, theme: Theme): StyleSpecification {
 export function MapView(props: MapViewProps) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<MlMap | null>(null);
-  const [cfg, setCfg] = useState<any>(null);
+  const [cfg, setCfg] = useState<any>(() => cachedCfg());
+  const fittedOnce = useRef(false);
+  const styleTheme = useRef<Theme | null>(null);
   const [theme, setTheme] = useState<Theme>(currentTheme());
   const [ready, setReady] = useState(0);
   const markers = useRef(new Map<string, { m: maplibregl.Marker; root: Root }>());
@@ -109,7 +142,9 @@ export function MapView(props: MapViewProps) {
   propsRef.current = props;
 
   useEffect(() => {
-    get('/api/map/config').then(setCfg).catch(() => setCfg({ basemap: null, problem: 'Não foi possível carregar a configuração do mapa.' }));
+    loadCfg()
+      .then((c) => setCfg((old: any) => (old && sameBasemap(old, c) && old.problem === c.problem ? old : c)))
+      .catch(() => setCfg((old: any) => old ?? { basemap: null, problem: 'Não foi possível carregar a configuração do mapa.' }));
     const onTheme = (e: any) => setTheme(e.detail);
     window.addEventListener('rastro-tema', onTheme);
     return () => window.removeEventListener('rastro-tema', onTheme);
@@ -124,9 +159,28 @@ export function MapView(props: MapViewProps) {
       protocolAdded = true;
     }
     const style = styleFor(cfg, theme);
+    styleTheme.current = theme;
+    // Começa já perto dos dados: loja informada, senão a última região vista neste aparelho
+    const firstStore = (propsRef.current.stores ?? []).find((s) => s.location);
+    const start = propsRef.current.focus
+      ? { center: [propsRef.current.focus.center.lng, propsRef.current.focus.center.lat] as [number, number], zoom: propsRef.current.focus.zoom ?? 15 }
+      : firstStore ? { center: [firstStore.location!.lng, firstStore.location!.lat] as [number, number], zoom: 14 }
+      : lastView() ?? { center: DEFAULT_CENTER, zoom: 3.6 };
     const m = new maplibregl.Map({
-      container: el.current, style, center: DEFAULT_CENTER, zoom: 3.6, attributionControl: { compact: true },
+      container: el.current, style, center: start.center, zoom: start.zoom, attributionControl: { compact: true },
       dragRotate: false, pitchWithRotate: false, maxPitch: 0,
+      fadeDuration: 0, // blocos aparecem na hora, sem esmaecer
+      pixelRatio: Math.min(window.devicePixelRatio || 1, 2), // celulares com tela 3x desenham menos, sem perder nitidez visível
+      refreshExpiredTiles: false,
+    });
+    let saveTimer: number | undefined;
+    m.on('moveend', () => {
+      clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(() => {
+        const c = m.getCenter();
+        if (m.getZoom() < 5) return;
+        try { localStorage.setItem(VIEW_KEY, JSON.stringify({ center: [c.lng, c.lat], zoom: Math.round(m.getZoom() * 10) / 10 })); } catch { /* ok */ }
+      }, 800);
     });
     m.touchZoomRotate.disableRotation();
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
@@ -152,6 +206,8 @@ export function MapView(props: MapViewProps) {
     const m = map.current;
     if (!m || !cfg) return;
     if (cfg.basemap?.type === 'style' && !cfg.basemap.darkUrl) return; // estilo único do provedor
+    if (styleTheme.current === theme) return; // o mapa acabou de ser criado com este tema
+    styleTheme.current = theme;
     m.setStyle(styleFor(cfg, theme), { diff: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
@@ -303,8 +359,11 @@ export function MapView(props: MapViewProps) {
     if (!coords.length) return;
     const lngs = coords.map((c) => c[0]), lats = coords.map((c) => c[1]);
     const b: LngLatBoundsLike = [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]];
+    // Primeiro enquadramento sem animação (não baixa blocos do caminho); os seguintes animam
+    const duration = fittedOnce.current ? 600 : 0;
+    fittedOnce.current = true;
     if (coords.length === 1) m.jumpTo({ center: coords[0], zoom: 15 });
-    else m.fitBounds(b, { padding: 60, maxZoom: 16, duration: 600 });
+    else m.fitBounds(b, { padding: 60, maxZoom: 16, duration });
   }, [ready, props.fitKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

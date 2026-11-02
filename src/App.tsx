@@ -75,6 +75,17 @@ function ReloadOnDeploy() {
   return null;
 }
 
+/** Depois que a tela abre, já baixa em segundo plano o código do mapa: abrir o Mapa fica instantâneo */
+function PrefetchMap() {
+  useEffect(() => {
+    const run = () => { import('./pages/MapPage').catch(() => {}); import('./components/map/MapView').catch(() => {}); };
+    const w = window as any;
+    const id = w.requestIdleCallback ? w.requestIdleCallback(run, { timeout: 4000 }) : window.setTimeout(run, 2500);
+    return () => { if (w.cancelIdleCallback) w.cancelIdleCallback(id); else clearTimeout(id); };
+  }, []);
+  return null;
+}
+
 export default function App() {
   const { status, user, locked } = useAuth();
   const loc = useLocation();
@@ -89,6 +100,7 @@ export default function App() {
   return (
     <AppShell>
       <ReloadOnDeploy />
+      {!promoter && <PrefetchMap />}
       {locked && <LockScreen />}
       <Suspense fallback={<Spinner />}>
         <Routes>
