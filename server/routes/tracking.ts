@@ -7,6 +7,7 @@ import { requireAuth, requireCapability, userOf, newId, sha256 } from '../auth/c
 import { assertStoreAccess, can, hasStoreAccess, scopeSql, storeLabel, SessionUser } from '../access';
 import { getInt } from '../settings';
 import { sessionTrack, scheduleCoverage, displayTrackParams } from '../services/coverage';
+import { bridgeGeometries } from '../services/bridges';
 import { buildTrack } from '../services/geo';
 import { broadcast } from '../services/realtime';
 import { emitWebhook } from '../services/webhooks';
@@ -370,6 +371,10 @@ trackingRouter.get('/sessions/:id', h(async (req, res) => {
       validPoints: track.validPoints,
       totalPoints: track.totalPoints,
       gaps: track.gaps,
+      // Trechos sem sinal de GPS ligados pelo caminho mais provável nas ruas (estimados, tracejados no mapa)
+      estimated: (await bridgeGeometries(track.bridges)).map((g, i) => ({
+        coordinates: g.coordinates, method: g.method, meters: Math.round(track.bridges[i].meters), seconds: Math.round(track.bridges[i].seconds),
+      })),
       discarded: track.discarded,
       rejectedByReason: rejectedRows.map((x) => ({ reason: x.reject_reason, count: x.n })),
       medianAccuracyM: acc[0]?.median === null || acc[0]?.median === undefined ? null : Math.round(acc[0].median),
@@ -419,24 +424,33 @@ trackingRouter.get('/routes', requireCapability('tracking.view'), h(async (req, 
   const bySession = new Map<string, any[]>();
   for (const p of pts) (bySession.get(p.session_id) ?? bySession.set(p.session_id, []).get(p.session_id)!).push(p);
   const stale = await getInt('TRACKING_STALE_MINUTES');
-  const features = rows.flatMap((r) => {
-    const t = buildTrack(bySession.get(r.id) ?? [], tp);
+  const tracks = rows.map((r) => ({ r, t: buildTrack(bySession.get(r.id) ?? [], tp) }));
+  // Trechos sem sinal: geometria já calculada pelas ruas (ou linha reta enquanto calcula, em segundo plano)
+  const allBridges = tracks.flatMap(({ t }) => t.bridges);
+  const bridgeGeoms = await bridgeGeometries(allBridges);
+  let bi = 0;
+  const features = tracks.flatMap(({ r, t }) => {
+    const estimated = t.bridges.map(() => bridgeGeoms[bi++]);
     if (!t.segments.length) return [];
-    return [{
-      type: 'Feature',
-      geometry: { type: 'MultiLineString', coordinates: t.segments },
-      properties: {
-        sessionId: r.id, campaignId: r.campaign_id, campaignName: r.campaign_name, storeId: r.store_id, storeName: r.store_name,
-        userName: r.user_name, startedAt: r.started_at, finishedAt: r.finished_at, state: sessionState(r, stale),
-        distanceM: Math.round(t.distanceM),
-      },
-    }];
+    const properties = {
+      sessionId: r.id, campaignId: r.campaign_id, campaignName: r.campaign_name, storeId: r.store_id, storeName: r.store_name,
+      userName: r.user_name, startedAt: r.started_at, finishedAt: r.finished_at, state: sessionState(r, stale),
+      distanceM: Math.round(t.distanceM),
+    };
+    return [
+      { type: 'Feature', geometry: { type: 'MultiLineString', coordinates: t.segments }, properties },
+      ...(estimated.length ? [{
+        type: 'Feature',
+        geometry: { type: 'MultiLineString', coordinates: estimated.map((g) => g.coordinates) },
+        properties: { ...properties, estimated: true, estimatedCount: estimated.length },
+      }] : []),
+    ];
   });
   // Consulta de percursos (dados de localização de pessoas) registrada no máximo a cada 30 min por pessoa
   const last = routeViewAudit.get(user.id) ?? 0;
   if (Date.now() - last > 30 * 60_000 && features.length) {
     routeViewAudit.set(user.id, Date.now());
-    await audit(req, { action: 'SESSION_VIEWED', targetType: 'routes', targetName: 'Camada de percursos do mapa', details: `${features.length} percurso(s) exibidos.` });
+    await audit(req, { action: 'SESSION_VIEWED', targetType: 'routes', targetName: 'Camada de percursos do mapa', details: `${features.filter((f: any) => !f.properties.estimated).length} percurso(s) exibidos.` });
   }
   return res.json({ type: 'FeatureCollection', features, truncated: rows.length === 200 });
 }));

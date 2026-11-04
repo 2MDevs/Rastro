@@ -105,7 +105,7 @@ export default function StorePanel() {
               areas={areaFeatures} routes={routeFeatures} live={liveFeatures}
               fitKey={`${s.id}-${s.location?.lat}-${areaFeatures.length}-${routeFeatures.length > 0}`} visible={{ streets: false, pois: false }} />
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-4 py-2.5 border-t border-line text-xs text-ink-3">
-              <span className="inline-flex items-center gap-2"><span className="inline-block h-1.5 w-6 rounded-full" style={{ background: MAP_COLORS.route }} />Percursos dos divulgadores (últimos 30 dias): {routeFeatures.length}</span>
+              <span className="inline-flex items-center gap-2"><span className="inline-block h-1.5 w-6 rounded-full" style={{ background: MAP_COLORS.route }} />Percursos dos divulgadores (últimos 30 dias): {routeFeatures.filter((f) => !f.properties.estimated).length}</span>
               <span className="inline-flex items-center gap-2"><span className="inline-block size-2.5 rounded-full" style={{ background: MAP_COLORS.live }} />Em campo agora: {liveFeatures.length}</span>
               {!can('tracking.view') && <span>Seu perfil não visualiza percursos de outras pessoas.</span>}
             </div>

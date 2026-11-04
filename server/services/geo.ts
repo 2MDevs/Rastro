@@ -191,7 +191,13 @@ export interface TrackParams {
   maxGapSeconds: number;
   maxGapMeters: number;
   maxSpeedKmh: number;
+  /** Trechos sem sinal até esta distância/tempo viram "trecho estimado" (0 = não estima) */
+  bridgeMaxMeters?: number;
+  bridgeMaxSeconds?: number;
 }
+
+/** Intervalo sem sinal de GPS entre dois trechos registrados (ligado no mapa como trecho estimado) */
+export interface TrackBridge { from: LngLat; to: LngLat; meters: number; seconds: number }
 
 export interface TrackResult {
   /** Trechos contínuos (cada um é uma linha); intervalos sem sinal ficam fora */
@@ -201,6 +207,8 @@ export interface TrackResult {
   totalPoints: number;
   discarded: { lowAccuracy: number; rejected: number; jumps: number };
   gaps: number;
+  /** Intervalos sem sinal que podem ser ligados (o caminho real nesse intervalo não foi medido) */
+  bridges: TrackBridge[];
 }
 
 /**
@@ -211,7 +219,7 @@ export interface TrackResult {
  */
 export function buildTrack(points: TrackPoint[], p: TrackParams): TrackResult {
   const sorted = [...points].sort((a, b) => +new Date(a.captured_at) - +new Date(b.captured_at));
-  const res: TrackResult = { segments: [], distanceM: 0, validPoints: 0, totalPoints: points.length, discarded: { lowAccuracy: 0, rejected: 0, jumps: 0 }, gaps: 0 };
+  const res: TrackResult = { segments: [], distanceM: 0, validPoints: 0, totalPoints: points.length, discarded: { lowAccuracy: 0, rejected: 0, jumps: 0 }, gaps: 0, bridges: [] };
   let current: LngLat[] = [];
   let lastT = 0;
   let skipped = 0;
@@ -237,8 +245,13 @@ export function buildTrack(points: TrackPoint[], p: TrackParams): TrackResult {
     const prev = current[current.length - 1];
     const dt = (t - lastT) / 1000;
     const dist = haversine(prev, here);
-    if (dt > p.maxGapSeconds || (dist > p.maxGapMeters && dt > 0 && dist / dt <= maxSpeed)) {
-      // intervalo grande: novo trecho, sem ligar os pontos
+    // Muito tempo sem ponto, mas quase no mesmo lugar (parado no sinal, conversando com cliente): continua a linha
+    const stoppedNearby = dt > p.maxGapSeconds && dist <= p.maxGapMeters;
+    if (!stoppedNearby && (dt > p.maxGapSeconds || (dist > p.maxGapMeters && dt > 0 && dist / dt <= maxSpeed))) {
+      // intervalo grande: novo trecho, sem ligar os pontos medidos
+      const bridgeOk = (p.bridgeMaxMeters ?? 0) > 0 && dt > 0 && dist <= (p.bridgeMaxMeters ?? 0)
+        && dt <= (p.bridgeMaxSeconds ?? 0) && dist / dt <= maxSpeed;
+      if (bridgeOk) res.bridges.push({ from: prev, to: here, meters: dist, seconds: dt });
       close(); res.gaps++;
       current.push(here); lastT = t; skipped = 0; res.validPoints++;
       continue;

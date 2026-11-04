@@ -233,12 +233,18 @@ export function MapView(props: MapViewProps) {
       },
     });
     // Percurso: contorno claro por baixo + linha roxa grossa, para destacar a rua percorrida do início ao fim
+    // Trecho sem sinal de GPS: caminho mais provável pelas ruas, tracejado (não foi medido)
     m.addLayer({
-      id: 'routes-casing', type: 'line', source: 'rs-routes', layout: { 'line-cap': 'round', 'line-join': 'round' },
+      id: 'routes-estimated', type: 'line', source: 'rs-routes', filter: ['==', ['get', 'estimated'], true],
+      layout: { 'line-cap': 'butt', 'line-join': 'round' },
+      paint: { 'line-color': MAP_COLORS.route, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 14, 4, 17, 7], 'line-opacity': 0.75, 'line-dasharray': [1.6, 1.2] },
+    });
+    m.addLayer({
+      id: 'routes-casing', type: 'line', source: 'rs-routes', filter: ['!=', ['get', 'estimated'], true], layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': theme === 'dark' ? '#1D1D1B' : '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 4, 14, 8, 17, 14], 'line-opacity': 0.85 },
     });
     m.addLayer({
-      id: 'routes-line', type: 'line', source: 'rs-routes', layout: { 'line-cap': 'round', 'line-join': 'round' },
+      id: 'routes-line', type: 'line', source: 'rs-routes', filter: ['!=', ['get', 'estimated'], true], layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': MAP_COLORS.route, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2.5, 14, 5, 17, 9], 'line-opacity': 0.95 },
     });
     m.addLayer({ id: 'pois-circle', type: 'circle', source: 'rs-pois', paint: { 'circle-radius': 6, 'circle-color': MAP_COLORS.poi, 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1.5 } });
@@ -256,7 +262,7 @@ export function MapView(props: MapViewProps) {
   }
 
   function bindEvents(m: MlMap) {
-    const clickable: [string, Selection['kind']][] = [['live-dot', 'live'], ['pois-circle', 'poi'], ['routes-line', 'route'], ['streets-line', 'street'], ['candidates-line', 'candidate'], ['areas-fill', 'area']];
+    const clickable: [string, Selection['kind']][] = [['live-dot', 'live'], ['pois-circle', 'poi'], ['routes-line', 'route'], ['routes-estimated', 'route'], ['streets-line', 'street'], ['candidates-line', 'candidate'], ['areas-fill', 'area']];
     for (const [id] of clickable) {
       m.on('mouseenter', id, () => { if (!propsRef.current.drawing && !propsRef.current.picking) m.getCanvas().style.cursor = 'pointer'; });
       m.on('mouseleave', id, () => { if (!propsRef.current.drawing && !propsRef.current.picking) m.getCanvas().style.cursor = ''; });

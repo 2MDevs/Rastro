@@ -58,3 +58,10 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - A conexão com o servidor do mapa é aberta antes de precisar dele, e o código do mapa é baixado em segundo plano logo que o RASTRO abre.
 - No Painel, o mapa não espera mais os números do painel para aparecer.
 - Em celulares com tela de alta densidade, o mapa desenha com até 2× de resolução (mais leve, sem diferença visível).
+
+## Percurso sem cortes nas falhas de sinal
+
+- Onde o GPS perdeu o sinal (túnel, viaduto, prédios altos), o mapa agora **liga o percurso pelo caminho mais provável nas ruas**, em linha roxa **tracejada** (estimado). Antes ficava um buraco.
+- Parado no mesmo lugar por muito tempo não corta mais a linha.
+- O detalhe do percurso explica quantos trechos ficaram sem sinal. Trechos estimados não contam na distância nem na cobertura.
+- Novas configurações em Integração: distância e tempo máximos para ligar trechos sem sinal (padrão 3 km e 30 min).

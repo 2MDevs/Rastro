@@ -56,7 +56,10 @@ export function Legend({ visible, coverageKnown }: { visible: Record<LayerKey, b
       items.push({ key: 'r3', label: 'Rua percorrida', el: <Line color={MAP_COLORS.streetDone} /> });
     }
   }
-  if (visible.routes) items.push({ key: 'p', label: 'Percurso realizado (GPS)', el: <Line color={MAP_COLORS.route} /> });
+  if (visible.routes) {
+    items.push({ key: 'p', label: 'Percurso realizado (GPS)', el: <Line color={MAP_COLORS.route} /> });
+    items.push({ key: 'p2', label: 'Trecho sem sinal de GPS — caminho provável pelas ruas (estimado)', el: <Line color={MAP_COLORS.route} dashed /> });
+  }
   if (visible.pois) items.push({ key: 'i', label: 'Ponto de interesse', el: <span className="size-3 rounded-full inline-block border border-white" style={{ background: MAP_COLORS.poi }} /> });
   if (visible.live) items.push({ key: 'l', label: 'Posição atual em campo (cinza = sem comunicação)', el: <span className="size-3 rounded-full inline-block border-2 border-white" style={{ background: MAP_COLORS.live }} /> });
   if (!items.length) return null;

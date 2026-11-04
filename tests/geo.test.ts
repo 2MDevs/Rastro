@@ -10,11 +10,27 @@ const pt = (i: number, dLng: number, extra: Partial<{ acc: number | null; dt: nu
 });
 
 describe('geo: percurso', () => {
-  it('não liga pontos separados por um intervalo longo (falha de sinal)', () => {
-    const pts = [pt(0, 0), pt(1, 0.00005), pt(2, 0.0001), pt(3, 0.00015, { dt: 10 * 60_000 }), pt(4, 0.0002, { dt: 10 * 60_000 + 5000 })];
+  it('não liga pontos medidos separados por uma falha de sinal longa', () => {
+    // ~500 m em 10 minutos sem pontos
+    const pts = [pt(0, 0), pt(1, 0.00005), pt(2, 0.0001), pt(3, 0.005, { dt: 10 * 60_000 }), pt(4, 0.00505, { dt: 10 * 60_000 + 5000 })];
     const t = buildTrack(pts, params);
     expect(t.segments.length).toBe(2);
     expect(t.gaps).toBe(1);
+    expect(t.bridges).toHaveLength(0); // sem parâmetros de trecho estimado
+  });
+  it('registra o trecho sem sinal para ligar como estimado', () => {
+    const pts = [pt(0, 0), pt(1, 0.00005), pt(2, 0.0001), pt(3, 0.005, { dt: 10 * 60_000 }), pt(4, 0.00505, { dt: 10 * 60_000 + 5000 })];
+    const t = buildTrack(pts, { ...params, bridgeMaxMeters: 3000, bridgeMaxSeconds: 1800 });
+    expect(t.bridges).toHaveLength(1);
+    expect(t.bridges[0].meters).toBeGreaterThan(450);
+    expect(t.bridges[0].meters).toBeLessThan(550);
+    expect(t.distanceM).toBeLessThan(20); // o trecho estimado não entra na distância medida
+  });
+  it('parado no mesmo lugar por muito tempo continua a mesma linha', () => {
+    const pts = [pt(0, 0), pt(1, 0.00005), pt(2, 0.0001, { dt: 10 * 60_000 }), pt(3, 0.00015, { dt: 10 * 60_000 + 5000 })];
+    const t = buildTrack(pts, params);
+    expect(t.segments.length).toBe(1);
+    expect(t.gaps).toBe(0);
   });
   it('descarta pontos imprecisos, recusados e saltos impossíveis', () => {
     const pts = [pt(0, 0), pt(1, 0.00005), pt(2, 0.05), pt(3, 0.0001), pt(4, 0.00015, { acc: 80 }), pt(5, 0.0002, { accepted: false }), pt(6, 0.00025, { acc: null })];

@@ -11,6 +11,8 @@ export async function trackParams(): Promise<TrackParams> {
     maxGapSeconds: await getInt('TRACK_MAX_GAP_SECONDS'),
     maxGapMeters: await getInt('TRACK_MAX_GAP_METERS'),
     maxSpeedKmh: await getInt('TRACK_MAX_SPEED_KMH'),
+    bridgeMaxMeters: await getInt('TRACK_BRIDGE_MAX_METERS'),
+    bridgeMaxSeconds: (await getInt('TRACK_BRIDGE_MAX_MINUTES')) * 60,
   };
 }
 

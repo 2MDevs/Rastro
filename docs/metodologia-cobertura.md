@@ -53,3 +53,16 @@ Na Matriz, a cobertura consolidada de uma loja (ou da rede) soma os metros perco
 - O GPS do celular pode errar de 5 a 30 m ou mais perto de prédios altos; ruas paralelas muito próximas podem ser contadas juntas.
 - Passar pela rua não significa que todas as casas receberam panfleto.
 - Os parâmetros padrão são **valores iniciais**: devem ser calibrados no teste de campo com a loja-piloto, comparando com o que a equipe realmente fez.
+
+## Trechos sem sinal de GPS (estimados)
+
+Quando o celular perde o sinal dos satélites (túnel, viaduto, galeria, prédios altos, celular no fundo da bolsa), não chegam pontos por um tempo. O caminho feito nesse intervalo **não foi medido**.
+
+- Se o intervalo é plausível (até 3 km e 30 minutos, com velocidade possível), o RASTRO liga o último ponto antes da falha ao primeiro depois dela pelo **caminho mais curto nas ruas do OpenStreetMap**. Se não houver caminho pelas ruas que faça sentido (mais de 2,5 vezes a distância direta), liga em linha reta.
+- Esses trechos aparecem **tracejados** no mapa e no detalhe do percurso, sempre identificados como estimados.
+- Trechos estimados **não entram** na distância medida nem no cálculo de cobertura das ruas.
+- O cálculo pelas ruas é feito em segundo plano e guardado; enquanto não fica pronto, o trecho aparece em linha reta tracejada.
+- Parado no mesmo lugar por muito tempo (por exemplo, num semáforo ou conversando com um cliente) não interrompe mais a linha.
+- Limites configuráveis em Integração: "Ligar trechos sem sinal de GPS de até (metros / minutos)". Zero desliga.
+
+Sem internet é diferente de sem GPS: o app Android continua registrando os pontos sem internet e envia tudo quando a conexão volta, então a falta de internet não corta o percurso. Pelo navegador, o GPS para quando a tela apaga — por isso o divulgador deve usar o app.
