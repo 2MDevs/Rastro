@@ -83,6 +83,13 @@ export const SETTINGS: Record<string, SettingDef> = {
     label: 'Velocidade máxima plausível (km/h)', group: 'coverage', kind: 'int', default: '60', min: 5, max: 200,
     help: 'Saltos acima desta velocidade são tratados como erro de sinal e não ligam o trajeto.',
   },
+  TRACK_BRIDGE_MAX_METERS: {
+    label: 'Ligar trechos sem sinal de GPS de até (metros)', group: 'coverage', kind: 'int', default: '3000', min: 0, max: 20000,
+    help: 'Quando o GPS perde o sinal (túnel, viaduto, prédios altos), o mapa liga o último ponto ao próximo pelo caminho mais provável nas ruas, em linha tracejada. Esses trechos não entram na cobertura nem na distância medida. 0 desliga.',
+  },
+  TRACK_BRIDGE_MAX_MINUTES: {
+    label: 'Ligar trechos sem sinal de GPS de até (minutos)', group: 'coverage', kind: 'int', default: '30', min: 1, max: 240,
+  },
   TRACKING_STALE_MINUTES: {
     label: 'Considerar "sem comunicação" após (minutos sem pontos)', group: 'coverage', kind: 'int', default: '5', min: 1, max: 120,
   },

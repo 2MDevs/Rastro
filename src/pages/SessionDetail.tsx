@@ -23,7 +23,15 @@ export default function SessionDetail() {
   useRealtime('tracking', (ev) => { if (ev?.sessionId === id || ev?.session?.id === id) s.reload(true); }, [id]);
 
   const d = s.data;
-  const route: MapFeature[] = useMemo(() => d?.track.segments.length ? [{ type: 'Feature', geometry: { type: 'MultiLineString', coordinates: d.track.segments }, properties: { sessionId: d.id, userName: d.userName, campaignName: d.campaignName, storeName: d.storeName, startedAt: d.startedAt, finishedAt: d.finishedAt, distanceM: d.track.distanceM } }] : [], [d]);
+  const route: MapFeature[] = useMemo(() => {
+    if (!d?.track.segments.length) return [];
+    const props = { sessionId: d.id, userName: d.userName, campaignName: d.campaignName, storeName: d.storeName, startedAt: d.startedAt, finishedAt: d.finishedAt, distanceM: d.track.distanceM };
+    const est = (d.track.estimated ?? []) as { coordinates: [number, number][] }[];
+    return [
+      { type: 'Feature', geometry: { type: 'MultiLineString', coordinates: d.track.segments }, properties: props },
+      ...(est.length ? [{ type: 'Feature' as const, geometry: { type: 'MultiLineString', coordinates: est.map((e) => e.coordinates) }, properties: { ...props, estimated: true } }] : []),
+    ];
+  }, [d]);
   const live: MapFeature[] = d?.status === 'IN_PROGRESS' && d.lastPosition ? [{ type: 'Feature', geometry: { type: 'Point', coordinates: [d.lastPosition.lng, d.lastPosition.lat] }, properties: { sessionId: d.id, userName: d.userName, accuracyM: d.lastPosition.accuracyM, stale: d.state === 'NO_COMMUNICATION', lastAt: d.lastPointReceivedAt } }] : [];
 
   async function finish() {
@@ -61,6 +69,11 @@ export default function SessionDetail() {
       <div className="grid xl:grid-cols-[1fr_320px] gap-5">
         <Card padded={false} className="overflow-hidden">
           <MapView className="h-[55dvh] min-h-[320px] sm:h-[520px]" routes={route} live={live} streets={streets.data?.features ?? []} fitKey={`${fitKey}-${route.length}`} visible={{ stores: false, areas: false, pois: false }} />
+          {(t.estimated?.length ?? 0) > 0 && (
+            <p className="px-5 py-3 text-xs text-ink-3 border-t border-line">
+              <strong className="text-ink-2">{t.estimated.length} trecho(s) sem sinal de GPS</strong> ({distance(t.estimated.reduce((s: number, e: any) => s + e.meters, 0))} em linha reta) aparecem <strong className="text-ink-2">tracejados</strong>: o celular ficou sem sinal de satélite (túnel, viaduto, prédios altos) e o RASTRO ligou os pontos pelo caminho mais provável nas ruas. Esses trechos são estimados e não entram na distância nem na cobertura.
+            </p>
+          )}
           {!route.length && <p className="px-5 py-3 text-sm text-ink-3 border-t border-line">Ainda não há trecho válido para desenhar. {t.totalPoints ? 'Os pontos recebidos estão fora do limite de precisão ou isolados.' : 'Nenhum ponto recebido.'}</p>}
         </Card>
         <div className="space-y-4">
