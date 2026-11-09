@@ -201,7 +201,7 @@ async function storeUserDto(storeId: string) {
   }));
 }
 
-storesRouter.get('/:id/users', requireCapability('users.manage'), h(async (req, res) => {
+storesRouter.get('/:id/users', requireCapability('people.manage'), h(async (req, res) => {
   const user = userOf(req);
   assertStoreAccess(user, req.params.id);
   const linked = await storeUserDto(req.params.id);
@@ -229,7 +229,7 @@ async function loadLinkTarget(actorRole: Role, userId: string) {
   return u;
 }
 
-storesRouter.post('/:id/users', requireCapability('users.manage'), h(async (req, res) => {
+storesRouter.post('/:id/users', requireCapability('people.manage'), h(async (req, res) => {
   const user = userOf(req);
   assertStoreAccess(user, req.params.id);
   const { userId } = parse(z.object({ userId: z.string() }), req.body);
@@ -243,7 +243,7 @@ storesRouter.post('/:id/users', requireCapability('users.manage'), h(async (req,
   return res.json({ linked: await storeUserDto(req.params.id) });
 }));
 
-storesRouter.delete('/:id/users/:userId', requireCapability('users.manage'), h(async (req, res) => {
+storesRouter.delete('/:id/users/:userId', requireCapability('people.manage'), h(async (req, res) => {
   const user = userOf(req);
   assertStoreAccess(user, req.params.id);
   const target = await loadLinkTarget(user.role, req.params.userId);

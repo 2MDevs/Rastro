@@ -209,6 +209,8 @@ export interface TrackResult {
   gaps: number;
   /** Intervalos sem sinal que podem ser ligados (o caminho real nesse intervalo não foi medido) */
   bridges: TrackBridge[];
+  /** Horário (ms) de cada vértice de cada trecho, na mesma ordem de segments */
+  times: number[][];
 }
 
 /**
@@ -219,8 +221,9 @@ export interface TrackResult {
  */
 export function buildTrack(points: TrackPoint[], p: TrackParams): TrackResult {
   const sorted = [...points].sort((a, b) => +new Date(a.captured_at) - +new Date(b.captured_at));
-  const res: TrackResult = { segments: [], distanceM: 0, validPoints: 0, totalPoints: points.length, discarded: { lowAccuracy: 0, rejected: 0, jumps: 0 }, gaps: 0, bridges: [] };
+  const res: TrackResult = { segments: [], distanceM: 0, validPoints: 0, totalPoints: points.length, discarded: { lowAccuracy: 0, rejected: 0, jumps: 0 }, gaps: 0, bridges: [], times: [] };
   let current: LngLat[] = [];
+  let curT: number[] = [];
   let lastT = 0;
   let skipped = 0;
   const maxSpeed = p.maxSpeedKmh / 3.6;
@@ -228,9 +231,10 @@ export function buildTrack(points: TrackPoint[], p: TrackParams): TrackResult {
   const close = () => {
     if (current.length >= 2) {
       res.segments.push(current);
+      res.times.push(curT);
       res.distanceM += lineLength(current);
     }
-    current = [];
+    current = []; curT = [];
   };
 
   for (const pt of sorted) {
@@ -239,7 +243,7 @@ export function buildTrack(points: TrackPoint[], p: TrackParams): TrackResult {
     const here: LngLat = [pt.lng, pt.lat];
     const t = +new Date(pt.captured_at);
     if (current.length === 0) {
-      current.push(here); lastT = t; skipped = 0; res.validPoints++;
+      current.push(here); curT.push(t); lastT = t; skipped = 0; res.validPoints++;
       continue;
     }
     const prev = current[current.length - 1];
@@ -253,7 +257,7 @@ export function buildTrack(points: TrackPoint[], p: TrackParams): TrackResult {
         && dt <= (p.bridgeMaxSeconds ?? 0) && dist / dt <= maxSpeed;
       if (bridgeOk) res.bridges.push({ from: prev, to: here, meters: dist, seconds: dt });
       close(); res.gaps++;
-      current.push(here); lastT = t; skipped = 0; res.validPoints++;
+      current.push(here); curT.push(t); lastT = t; skipped = 0; res.validPoints++;
       continue;
     }
     if (dt <= 0 ? dist > 5 : dist / dt > maxSpeed || dist > p.maxGapMeters) {
@@ -262,13 +266,13 @@ export function buildTrack(points: TrackPoint[], p: TrackParams): TrackResult {
       res.discarded.jumps++;
       if (skipped >= 3) {
         close(); res.gaps++;
-        current.push(here); lastT = t; skipped = 0; res.validPoints++; res.discarded.jumps--;
+        current.push(here); curT.push(t); lastT = t; skipped = 0; res.validPoints++; res.discarded.jumps--;
       }
       continue;
     }
     skipped = 0;
     if (dist < 0.5) { lastT = t; res.validPoints++; continue; } // parado: não duplica vértice
-    current.push(here); lastT = t; res.validPoints++;
+    current.push(here); curT.push(t); lastT = t; res.validPoints++;
   }
   close();
   return res;

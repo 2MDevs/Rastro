@@ -3,13 +3,19 @@ import { z } from 'zod';
 import { pool, tx } from '../db';
 import { h, HttpError, parse } from '../http';
 import { audit } from '../audit';
-import { requireAuth, requireCapability, userOf, newId, revokeUserSessions } from '../auth/core';
+import { requireAuth, userOf, newId, revokeUserSessions } from '../auth/core';
 import { createPasswordLink } from '../auth/routes';
-import { assignableRoles, isDeveloperEmail, MATRIX_ROLES, ROLE_LABEL, ROLES, Role } from '../access';
+import { assignableRoles, can, isDeveloperEmail, MATRIX_ROLES, ROLE_LABEL, ROLES, Role } from '../access';
 import { dropUserStreams } from '../services/realtime';
 
 export const usersRouter = Router();
-usersRouter.use(requireAuth(), requireCapability('users.manage'));
+// Usuários: a tela completa é da Administração (users.manage). Diretor e Gestor da franquia só cadastram
+// gerente e divulgadores pelo Painel da loja (people.manage) e nunca enxergam ou alteram a administração.
+usersRouter.use(requireAuth(), (req, _res, next) => {
+  const u = userOf(req);
+  if (can(u.role, 'users.manage') || can(u.role, 'people.manage')) return next();
+  next(new HttpError(403, 'Você não tem permissão para esta área.', 'FORBIDDEN'));
+});
 
 const maskPhone = (p: string | null) => (p ? p.replace(/\d(?=\d{4})/g, '•') : null);
 
@@ -32,8 +38,8 @@ const LIST_SQL = `
 
 usersRouter.get('/', h(async (req, res) => {
   const actor = userOf(req);
-  // O gestor da franquia vê só as pessoas das lojas (gerentes e divulgadores) e a si mesmo
-  const { rows } = actor.role === 'FRANCHISE_MANAGER'
+  // Sem a Administração: vê só as pessoas das lojas (gerentes e divulgadores) e a si mesmo
+  const { rows } = !can(actor.role, 'users.manage')
     ? await pool.query(`${LIST_SQL} WHERE u.role IN ('STORE_MANAGER','PROMOTER') OR u.id = $1 ORDER BY u.status, u.name`, [actor.id])
     : await pool.query(`${LIST_SQL} ORDER BY u.status, u.name`);
   return res.json({ users: rows.map(toDto), assignableRoles: assignableRoles(userOf(req).role).map((r) => ({ value: r, label: ROLE_LABEL[r] })) });

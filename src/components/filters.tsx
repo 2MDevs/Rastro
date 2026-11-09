@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { get } from '../lib/api';
 import { daysAgo, today } from '../lib/format';
+import { onStoreViewChange } from '../lib/storeView';
 import type { Store } from '../lib/types';
 import { Input, Select } from './ui';
 
 let storeCache: { at: number; list: Store[] } | null = null;
+// Ao entrar ou sair da visão de uma loja, a lista de lojas muda
+onStoreViewChange(() => { storeCache = null; });
 export function useStores() {
   const [stores, setStores] = useState<Store[]>(storeCache?.list ?? []);
   const [loading, setLoading] = useState(!storeCache);

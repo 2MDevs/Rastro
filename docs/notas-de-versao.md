@@ -65,3 +65,20 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - Parado no mesmo lugar por muito tempo não corta mais a linha.
 - O detalhe do percurso explica quantos trechos ficaram sem sinal. Trechos estimados não contam na distância nem na cobertura.
 - Novas configurações em Integração: distância e tempo máximos para ligar trechos sem sinal (padrão 3 km e 30 min).
+
+## Cores por passagens, visão da loja e Administração só para o administrador
+
+**Percurso em mapa de calor**
+- O percurso agora muda de cor conforme quantas vezes o trecho foi percorrido: **1 vez amarelo**, 2 vezes âmbar, 3 laranja, 4 vermelho e **5 ou mais vermelho escuro**. Ida e volta pela mesma rua contam 2; percursos de pessoas diferentes na mesma rua também somam.
+- No Mapa e no Painel da loja a contagem soma todos os percursos mostrados (período e lojas escolhidos); no detalhe de um percurso, conta só aquele percurso.
+- Contorno escuro para o amarelo aparecer sobre as ruas do mapa. Trechos sem sinal de GPS ficam em cinza tracejado. Posição em campo agora em azul.
+
+**Painel Matriz e visão da loja**
+- No Painel Matriz (Administrador, Diretor, Gestor) não aparecem mais as telas de loja: Modo campo, Percursos e Territórios.
+- Ao abrir uma loja, o RASTRO entra na **visão da loja**: o menu mostra só Painel da loja, Mapa, Campanhas, Percursos, Territórios e Relatórios daquela loja, e somem Painel Matriz, Unidades e Administração — como se estivesse com o login da loja. O servidor também restringe as consultas a ela. "Voltar ao Painel Matriz" sai da visão.
+- Tela Unidades sem rolagem lateral: menos colunas, informações agrupadas.
+
+**Administração só para o Administrador**
+- Diretor e Gestor da franquia não acessam mais a Administração (Usuários, Dispositivos, Auditoria, Sistema, chaves de API) e não conseguem alterar, bloquear ou ver administradores.
+- Eles continuam cadastrando gerente e divulgadores pelo Painel da loja.
+- "Segurança da conta" passou para uma seção "Conta", disponível para todos.

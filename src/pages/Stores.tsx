@@ -25,20 +25,25 @@ export default function Stores() {
         actions={manage && <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => setEditing('new')}>Nova loja</Button>} />
       <Card padded={false}>
         {loading && !stores.length ? <Spinner /> : stores.length ? (
-          <Table head={['Loja', 'Endereço', 'Localização', 'Situação', 'Campanhas ativas', 'Territórios', 'Última atividade', '']}>
+          <Table head={['Loja', 'Situação', 'Operação', 'Última atividade', '']}>
             {stores.map((s) => (
               <tr key={s.id} className="hover:bg-panel-2 cursor-pointer" onClick={() => navigate(`/unidades/${s.id}`)}>
-                <Td><Link to={`/unidades/${s.id}`} className="font-medium text-ink hover:underline" onClick={(e) => e.stopPropagation()}>{s.name}</Link><div className="text-xs text-ink-3">{s.code}</div></Td>
-                <Td className="text-ink-2 max-w-64 truncate">{s.address || <span className="text-ink-3">A definir</span>}</Td>
-                <Td>{s.location ? (s.locationInfo?.source === 'GPS' ? <Badge tone="ok"><MapPin className="size-3" /> GPS na loja</Badge> : <Badge tone="yellow"><MapPin className="size-3" /> Marcada no mapa</Badge>) : <Badge tone="warn">A definir</Badge>}</Td>
-                <Td>{s.status === 'INACTIVE' ? <Badge>Inativa</Badge> : s.operating ? <Badge tone="ok">Em operação</Badge> : <Badge tone="neutral">Cadastrada</Badge>}</Td>
-                <Td className="tabular">{s.activeCampaigns}</Td>
-                <Td className="tabular">{s.areas}</Td>
-                <Td className="text-xs text-ink-3">{s.lastActivityAt ? relative(s.lastActivityAt) : '—'}</Td>
-                <Td className="text-right whitespace-nowrap" >
-                  <span onClick={(e) => e.stopPropagation()}>
-                    <Link to={`/unidades/${s.id}`}><Button variant="ghost" icon={<LayoutDashboard className="size-4" />}>Painel da loja</Button></Link>
-                    {manage && <Button variant="ghost" icon={<Pencil className="size-4" />} onClick={() => setEditing(s)}>Editar</Button>}
+                <Td className="min-w-0">
+                  <Link to={`/unidades/${s.id}`} className="font-medium text-ink hover:underline" onClick={(e) => e.stopPropagation()}>{s.name}</Link>
+                  <div className="text-xs text-ink-3 truncate max-w-[22rem]" title={s.address || undefined}>{s.code}{s.address ? ` · ${s.address}` : ' · endereço a definir'}</div>
+                </Td>
+                <Td>
+                  <div className="flex flex-wrap gap-1 justify-end md:justify-start">
+                    {s.status === 'INACTIVE' ? <Badge>Inativa</Badge> : s.operating ? <Badge tone="ok">Em operação</Badge> : <Badge tone="neutral">Cadastrada</Badge>}
+                    {s.location ? (s.locationInfo?.source === 'GPS' ? <Badge tone="ok"><MapPin className="size-3" /> GPS</Badge> : <Badge tone="yellow"><MapPin className="size-3" /> Mapa</Badge>) : <Badge tone="warn"><MapPin className="size-3" /> Sem local</Badge>}
+                  </div>
+                </Td>
+                <Td className="text-xs text-ink-2 whitespace-nowrap">{s.activeCampaigns} campanha(s) ativa(s)<div className="text-ink-3">{s.areas} território(s)</div></Td>
+                <Td className="text-xs text-ink-3 whitespace-nowrap">{s.lastActivityAt ? relative(s.lastActivityAt) : '—'}</Td>
+                <Td className="text-right whitespace-nowrap w-px">
+                  <span className="inline-flex gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Link to={`/unidades/${s.id}`}><Button variant="ghost" icon={<LayoutDashboard className="size-4" />}>Abrir</Button></Link>
+                    {manage && <Button variant="ghost" icon={<Pencil className="size-4" />} onClick={() => setEditing(s)} aria-label={`Editar ${s.name}`} title="Editar loja" />}
                   </span>
                 </Td>
               </tr>

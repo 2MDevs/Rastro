@@ -1,4 +1,5 @@
 /** Cliente da API: trata sessão expirada, tela bloqueada e confirmação de senha em um só lugar. */
+import { getStoreView } from './storeView';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public code?: string, public data?: any) {
@@ -16,11 +17,14 @@ export function onApiSignal(fn: Listener) {
 
 export async function api<T = any>(path: string, opts: { method?: string; body?: unknown; signal?: AbortSignal; raw?: BodyInit; headers?: Record<string, string> } = {}): Promise<T> {
   let resp: Response;
+  // Visão da loja: o servidor responde só com os dados daquela loja
+  const view = getStoreView();
+  const viewHeader: Record<string, string> = view ? { 'X-Rastro-Loja': view.id } : {};
   try {
     resp = await fetch(path, {
       method: opts.method ?? (opts.body !== undefined || opts.raw ? 'POST' : 'GET'),
       credentials: 'same-origin',
-      headers: opts.raw ? opts.headers : { 'Content-Type': 'application/json', ...(opts.headers ?? {}) },
+      headers: opts.raw ? { ...viewHeader, ...(opts.headers ?? {}) } : { 'Content-Type': 'application/json', ...viewHeader, ...(opts.headers ?? {}) },
       body: opts.raw ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
       signal: opts.signal,
     });

@@ -222,6 +222,13 @@ export function requireAuth(opts: AuthOptions = {}) {
       (req as any).reauthAt = row.reauth_at ? new Date(row.reauth_at) : null;
 
       const url = req.originalUrl.split('?')[0];
+      // Visão da loja: alguém da Matriz dentro do painel de uma loja enxerga só aquela loja (como o login da loja).
+      // Só restringe — nunca amplia o acesso; o login e a conta (/api/auth) continuam com o perfil completo.
+      const viewStore = String(req.headers['x-rastro-loja'] || '').trim();
+      if (viewStore && viewStore.length <= 64 && user.storeScope === 'ALL' && !url.startsWith('/api/auth/')) {
+        const { rows: st } = await pool.query('SELECT 1 FROM stores WHERE id = $1', [viewStore]);
+        if (st[0]) { user.storeScope = [viewStore]; (req as any).storeView = viewStore; }
+      }
       // O envio de pontos do rastreamento (app em segundo plano) continua mesmo com a tela bloqueada
       const trackingUpload = req.method === 'POST' && /^\/api\/tracking\/sessions\/[^/]+\/(points|finish)$/.test(url);
       if (row.locked_at && !LOCKED_ALLOWED.has(url) && !trackingUpload) {

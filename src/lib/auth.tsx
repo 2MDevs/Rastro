@@ -1,3 +1,4 @@
+import { setStoreView } from './storeView';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { api, get, onApiSignal, post } from './api';
 import { connectRealtime, disconnectRealtime } from './events';
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await post('/api/auth/logout').catch(() => {});
+    setStoreView(null);
     disconnectRealtime();
     setUser(null);
     setLocked(false);

@@ -19,15 +19,19 @@ import type { LatLng } from '../../lib/types';
  *  - Posição atual de quem está em campo (ao vivo)
  */
 
+/** Cores por número de passagens no mesmo trecho: 1, 2, 3, 4, 5 ou mais */
+export const PASS_COLORS = ['#FACC15', '#F59E0B', '#F97316', '#EF4444', '#991B1B'];
+
 export const MAP_COLORS = {
   area: '#F6D35C',
   streetPending: '#F6D35C',
   streetPartial: '#F2A541',
   streetDone: '#4CC38A',
   streetCandidate: '#9C9A92',
-  route: '#9333EA', // roxo: percurso feito pelo divulgador
+  route: '#F59E0B', // percurso (a cor final depende de quantas vezes o trecho foi percorrido)
+  routeEstimated: '#8A877E', // trecho sem sinal de GPS (estimado)
   poi: '#B48CF2',
-  live: '#6D28D9',
+  live: '#2563EB',
   draw: '#F6D35C',
 };
 
@@ -237,15 +241,22 @@ export function MapView(props: MapViewProps) {
     m.addLayer({
       id: 'routes-estimated', type: 'line', source: 'rs-routes', filter: ['==', ['get', 'estimated'], true],
       layout: { 'line-cap': 'butt', 'line-join': 'round' },
-      paint: { 'line-color': MAP_COLORS.route, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 14, 4, 17, 7], 'line-opacity': 0.75, 'line-dasharray': [1.6, 1.2] },
+      paint: { 'line-color': MAP_COLORS.routeEstimated, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 14, 4, 17, 7], 'line-opacity': 0.9, 'line-dasharray': [1.6, 1.2] },
     });
     m.addLayer({
-      id: 'routes-casing', type: 'line', source: 'rs-routes', filter: ['!=', ['get', 'estimated'], true], layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': theme === 'dark' ? '#1D1D1B' : '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 4, 14, 8, 17, 14], 'line-opacity': 0.85 },
+      id: 'routes-casing', type: 'line', source: 'rs-routes', filter: ['!=', ['get', 'estimated'], true],
+      // contorno escuro: o amarelo do percurso aparece mesmo sobre as ruas amarelas do mapa
+      layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['coalesce', ['get', 'passes'], 1] },
+      paint: { 'line-color': '#1D1D1B', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 4, 14, 8, 17, 14], 'line-opacity': theme === 'dark' ? 0.9 : 0.55 },
     });
     m.addLayer({
-      id: 'routes-line', type: 'line', source: 'rs-routes', filter: ['!=', ['get', 'estimated'], true], layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': MAP_COLORS.route, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2.5, 14, 5, 17, 9], 'line-opacity': 0.95 },
+      id: 'routes-line', type: 'line', source: 'rs-routes', filter: ['!=', ['get', 'estimated'], true],
+      layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['coalesce', ['get', 'passes'], 1] },
+      // Mapa de calor: 1ª passagem amarelo, depois laranja, e quanto mais vezes, mais vermelho
+      paint: {
+        'line-color': ['match', ['coalesce', ['get', 'passes'], 1], 1, PASS_COLORS[0], 2, PASS_COLORS[1], 3, PASS_COLORS[2], 4, PASS_COLORS[3], PASS_COLORS[4]],
+        'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2.5, 14, 5, 17, 9], 'line-opacity': 1,
+      },
     });
     m.addLayer({ id: 'pois-circle', type: 'circle', source: 'rs-pois', paint: { 'circle-radius': 6, 'circle-color': MAP_COLORS.poi, 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1.5 } });
     m.addLayer({ id: 'pois-label', type: 'symbol', source: 'rs-pois', minzoom: 14,

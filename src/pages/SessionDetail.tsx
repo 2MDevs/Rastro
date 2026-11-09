@@ -27,8 +27,11 @@ export default function SessionDetail() {
     if (!d?.track.segments.length) return [];
     const props = { sessionId: d.id, userName: d.userName, campaignName: d.campaignName, storeName: d.storeName, startedAt: d.startedAt, finishedAt: d.finishedAt, distanceM: d.track.distanceM };
     const est = (d.track.estimated ?? []) as { coordinates: [number, number][] }[];
+    const levels = (d.track.passes ?? []) as { passes: number; lines: [number, number][][] }[];
     return [
-      { type: 'Feature', geometry: { type: 'MultiLineString', coordinates: d.track.segments }, properties: props },
+      ...(levels.length
+        ? levels.map((l) => ({ type: 'Feature' as const, geometry: { type: 'MultiLineString', coordinates: l.lines }, properties: { ...props, passes: l.passes } }))
+        : [{ type: 'Feature' as const, geometry: { type: 'MultiLineString', coordinates: d.track.segments }, properties: props }]),
       ...(est.length ? [{ type: 'Feature' as const, geometry: { type: 'MultiLineString', coordinates: est.map((e) => e.coordinates) }, properties: { ...props, estimated: true } }] : []),
     ];
   }, [d]);

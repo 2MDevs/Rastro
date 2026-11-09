@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Layers, Store, Circle, Route, MapPin, Radio } from 'lucide-react';
 import { Toggle, cx } from '../ui';
-import { LayerKey, MAP_COLORS } from './MapView';
+import { LayerKey, MAP_COLORS, PASS_COLORS } from './MapView';
 
 export const LAYER_INFO: Record<LayerKey, { label: string; icon: ReactNode }> = {
   stores: { label: 'Unidade (loja)', icon: <Store className="size-4" /> },
@@ -44,6 +44,20 @@ const Line = ({ color, dashed }: { color: string; dashed?: boolean }) => (
   <svg width="26" height="8" aria-hidden="true"><line x1="1" y1="4" x2="25" y2="4" stroke={color} strokeWidth="3" strokeLinecap="round" strokeDasharray={dashed ? '4 3' : undefined} /></svg>
 );
 
+/** Escala de passagens: 1×, 2×, 3×, 4×, 5+ */
+export function PassScale({ labels = false }: { labels?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-label="Escala de passagens: amarelo uma vez, até vermelho cinco ou mais vezes">
+      {PASS_COLORS.map((c, i) => (
+        <span key={c} className="inline-flex flex-col items-center">
+          <span className="inline-block h-2 w-[10px]" style={{ background: c, borderRadius: i === 0 ? '4px 0 0 4px' : i === 4 ? '0 4px 4px 0' : 0 }} />
+          {labels && <span className="text-[9px] text-ink-3 leading-none mt-0.5">{i === 4 ? '5+' : `${i + 1}×`}</span>}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 /** Legenda que acompanha as camadas ligadas */
 export function Legend({ visible, coverageKnown }: { visible: Record<LayerKey, boolean>; coverageKnown?: boolean }) {
   const items: { key: string; el: ReactNode; label: string }[] = [];
@@ -57,8 +71,8 @@ export function Legend({ visible, coverageKnown }: { visible: Record<LayerKey, b
     }
   }
   if (visible.routes) {
-    items.push({ key: 'p', label: 'Percurso realizado (GPS)', el: <Line color={MAP_COLORS.route} /> });
-    items.push({ key: 'p2', label: 'Trecho sem sinal de GPS — caminho provável pelas ruas (estimado)', el: <Line color={MAP_COLORS.route} dashed /> });
+    items.push({ key: 'p', label: 'Percurso: quantas vezes passou pelo trecho (1ª vez amarelo → muitas vezes vermelho)', el: <PassScale /> });
+    items.push({ key: 'p2', label: 'Trecho sem sinal de GPS — caminho provável pelas ruas (estimado)', el: <Line color={MAP_COLORS.routeEstimated} dashed /> });
   }
   if (visible.pois) items.push({ key: 'i', label: 'Ponto de interesse', el: <span className="size-3 rounded-full inline-block border border-white" style={{ background: MAP_COLORS.poi }} /> });
   if (visible.live) items.push({ key: 'l', label: 'Posição atual em campo (cinza = sem comunicação)', el: <span className="size-3 rounded-full inline-block border-2 border-white" style={{ background: MAP_COLORS.live }} /> });
