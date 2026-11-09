@@ -2,7 +2,7 @@
 
 ## Padrão: mapa gratuito (OpenFreeMap)
 
-Sem nenhuma configuração, o RASTRO usa o **OpenFreeMap**: mapa público e gratuito com dados do OpenStreetMap, sem cadastro, sem chave de acesso e sem limite de uso declarado. Estilo claro "liberty" e estilo escuro "dark" (se o escuro não estiver disponível, o sistema usa o claro). Por ser um serviço público oferecido "como está", ele pode mudar ou sair do ar; para não depender dele, use o arquivo próprio descrito abaixo.
+Sem nenhuma configuração, o RASTRO usa o **OpenFreeMap**: mapa público e gratuito com dados do OpenStreetMap, sem cadastro, sem chave de acesso e sem limite de uso declarado. Estilo claro "liberty" (com as ruas recoloridas em cinza e branco pelo RASTRO, para não confundir com o percurso) e estilo escuro "dark" (se o escuro não estiver disponível, o sistema usa o claro). Por ser um serviço público oferecido "como está", ele pode mudar ou sair do ar; para não depender dele, use o arquivo próprio descrito abaixo.
 
 ## Opcional: arquivo próprio (OpenStreetMap em PMTiles)
 
