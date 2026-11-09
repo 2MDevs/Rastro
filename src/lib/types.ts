@@ -1,7 +1,7 @@
 export type Role = 'DEVELOPER' | 'ADMIN' | 'DIRECTOR' | 'FRANCHISE_MANAGER' | 'COORDINATOR' | 'STORE_MANAGER' | 'PROMOTER';
 export type Capability =
   | 'matrix.view' | 'stores.manage' | 'stores.locate' | 'territory.manage' | 'campaigns.manage' | 'tracking.view' | 'reports.view'
-  | 'users.manage' | 'devices.manage' | 'audit.view' | 'system.view' | 'apikeys.manage' | 'integration.manage' | 'infra.destructive';
+  | 'users.manage' | 'people.manage' | 'devices.manage' | 'audit.view' | 'system.view' | 'apikeys.manage' | 'integration.manage' | 'infra.destructive';
 
 export interface Me {
   id: string; name: string; email: string; role: Role; roleLabel: string; capabilities: Capability[];

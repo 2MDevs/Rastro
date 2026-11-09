@@ -8,6 +8,7 @@ import { assertStoreAccess, can, hasStoreAccess, scopeSql, storeLabel, SessionUs
 import { getInt } from '../settings';
 import { sessionTrack, scheduleCoverage, displayTrackParams } from '../services/coverage';
 import { bridgeGeometries } from '../services/bridges';
+import { computePasses } from '../services/passes';
 import { buildTrack } from '../services/geo';
 import { broadcast } from '../services/realtime';
 import { emitWebhook } from '../services/webhooks';
@@ -346,6 +347,13 @@ trackingRouter.get('/sessions', h(async (req, res) => {
   return res.json(rows.map((r) => sessionDto(r, stale)));
 }));
 
+/** Agrupa as linhas por número de passagens (uma camada de cor por nível) */
+function byPassLevel(runs: { coords: [number, number][]; passes: number }[]): [number, [number, number][][]][] {
+  const m = new Map<number, [number, number][][]>();
+  for (const r of runs) (m.get(r.passes) ?? m.set(r.passes, []).get(r.passes)!).push(r.coords);
+  return [...m.entries()].sort((a, b) => a[0] - b[0]);
+}
+
 trackingRouter.get('/sessions/:id', h(async (req, res) => {
   const user = userOf(req);
   const r = await loadSession(user, req.params.id);
@@ -367,6 +375,9 @@ trackingRouter.get('/sessions/:id', h(async (req, res) => {
     ...sessionDto(r, await getInt('TRACKING_STALE_MINUTES')),
     track: {
       segments: track.segments,
+      // Mesmos trechos, separados por quantas vezes a pessoa passou por eles neste percurso
+      passes: byPassLevel(computePasses([{ sessionId: r.id, segments: track.segments, times: track.times }]).get(r.id) ?? [])
+        .map(([level, lines]) => ({ passes: level, lines })),
       distanceM: Math.round(track.distanceM),
       validPoints: track.validPoints,
       totalPoints: track.totalPoints,
@@ -429,6 +440,8 @@ trackingRouter.get('/routes', requireCapability('tracking.view'), h(async (req, 
   const allBridges = tracks.flatMap(({ t }) => t.bridges);
   const bridgeGeoms = await bridgeGeometries(allBridges);
   let bi = 0;
+  // Quantas vezes cada trecho foi percorrido, somando todos os percursos mostrados (amarelo → vermelho)
+  const passes = computePasses(tracks.map(({ r, t }) => ({ sessionId: r.id, segments: t.segments, times: t.times })));
   const features = tracks.flatMap(({ r, t }) => {
     const estimated = t.bridges.map(() => bridgeGeoms[bi++]);
     if (!t.segments.length) return [];
@@ -438,7 +451,9 @@ trackingRouter.get('/routes', requireCapability('tracking.view'), h(async (req, 
       distanceM: Math.round(t.distanceM),
     };
     return [
-      { type: 'Feature', geometry: { type: 'MultiLineString', coordinates: t.segments }, properties },
+      ...byPassLevel(passes.get(r.id) ?? []).map(([level, lines]) => ({
+        type: 'Feature', geometry: { type: 'MultiLineString', coordinates: lines }, properties: { ...properties, passes: level },
+      })),
       ...(estimated.length ? [{
         type: 'Feature',
         geometry: { type: 'MultiLineString', coordinates: estimated.map((g) => g.coordinates) },
@@ -450,7 +465,7 @@ trackingRouter.get('/routes', requireCapability('tracking.view'), h(async (req, 
   const last = routeViewAudit.get(user.id) ?? 0;
   if (Date.now() - last > 30 * 60_000 && features.length) {
     routeViewAudit.set(user.id, Date.now());
-    await audit(req, { action: 'SESSION_VIEWED', targetType: 'routes', targetName: 'Camada de percursos do mapa', details: `${features.filter((f: any) => !f.properties.estimated).length} percurso(s) exibidos.` });
+    await audit(req, { action: 'SESSION_VIEWED', targetType: 'routes', targetName: 'Camada de percursos do mapa', details: `${new Set(features.map((f: any) => f.properties.sessionId)).size} percurso(s) exibidos.` });
   }
   return res.json({ type: 'FeatureCollection', features, truncated: rows.length === 200 });
 }));

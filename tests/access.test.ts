@@ -150,6 +150,41 @@ describe('gestor da franquia', () => {
   });
 });
 
+describe('administração só para o administrador', () => {
+  it('diretor e gestor não entram na Administração nem bloqueiam o administrador', async () => {
+    const diretor = await login((await createUser('DIRECTOR')).email);
+    const gestor = await login((await createUser('FRANCHISE_MANAGER')).email);
+    const adm = await createUser('ADMIN');
+    for (const who of [diretor, gestor]) {
+      expect((await who.get('/api/audit')).status).toBe(403);
+      expect((await who.get('/api/system/resources')).status).toBe(403);
+      expect((await who.get('/api/integrations/keys')).status).toBe(403);
+      expect((await who.post(`/api/users/${adm.id}/block`).send({ blocked: true })).status).toBe(403);
+      expect((await who.patch(`/api/users/${adm.id}`).send({ name: 'Trocado' })).status).toBe(403);
+      // a lista de pessoas mostra só gerentes e divulgadores (e a própria pessoa)
+      const list = await who.get('/api/users');
+      expect(list.status).toBe(200);
+      expect(list.body.users.some((u: any) => u.role === 'ADMIN')).toBe(false);
+    }
+    expect((await diretor.post('/api/users').send({ name: 'Adm', email: 'adm3@teste.local', role: 'ADMIN' })).status).toBe(403);
+  });
+});
+
+describe('visão da loja (Matriz dentro do painel de uma loja)', () => {
+  it('o cabeçalho restringe a Matriz a uma loja, sem ampliar o acesso de ninguém', async () => {
+    const todas = await admin.get('/api/stores');
+    expect(todas.body.length).toBeGreaterThanOrEqual(2);
+    const umaSo = await admin.get('/api/stores').set('X-Rastro-Loja', lojaA);
+    expect(umaSo.body.map((s: any) => s.id)).toEqual([lojaA]);
+    expect((await admin.get(`/api/stores/${lojaB}`).set('X-Rastro-Loja', lojaA)).status).toBe(404);
+    // gerente da A não ganha a loja B pelo cabeçalho
+    expect((await gerenteA.get(`/api/stores/${lojaB}`).set('X-Rastro-Loja', lojaB)).status).toBe(404);
+    // a conta (/api/auth/me) continua com o perfil completo
+    const me = await admin.get('/api/auth/me').set('X-Rastro-Loja', lojaA);
+    expect(me.body.user.stores).toBe('ALL');
+  });
+});
+
 describe('localização da loja pelo GPS', () => {
   const now = () => new Date().toISOString();
   it('gerente registra a localização da própria loja; precisão ruim é recusada', async () => {

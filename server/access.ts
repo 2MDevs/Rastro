@@ -31,7 +31,8 @@ export type Capability =
   | 'campaigns.manage'     // campanhas, ruas planejadas, responsáveis
   | 'tracking.view'        // ver percursos de outras pessoas
   | 'reports.view'
-  | 'users.manage'
+  | 'users.manage'         // tela Usuários (Administração): só Administrador e Desenvolvedor
+  | 'people.manage'        // cadastrar gerente e divulgadores pelo Painel da loja
   | 'devices.manage'       // dispositivos de todos
   | 'audit.view'
   | 'system.view'          // tela Sistema (recursos, servidor, artefatos)
@@ -42,21 +43,22 @@ export type Capability =
 const CAPS: Record<Role, Capability[]> = {
   DEVELOPER: [
     'matrix.view', 'stores.manage', 'stores.locate', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
-    'users.manage', 'devices.manage', 'audit.view', 'system.view', 'apikeys.manage', 'integration.manage',
+    'users.manage', 'people.manage', 'devices.manage', 'audit.view', 'system.view', 'apikeys.manage', 'integration.manage',
     'infra.destructive',
   ],
   ADMIN: [
     'matrix.view', 'stores.manage', 'stores.locate', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
-    'users.manage', 'devices.manage', 'audit.view', 'system.view', 'apikeys.manage',
+    'users.manage', 'people.manage', 'devices.manage', 'audit.view', 'system.view', 'apikeys.manage',
   ],
+  // Diretor e Gestor da franquia: todas as lojas e percursos, sem a área de Administração.
+  // Cadastram só gerente e divulgadores, pelo Painel da loja.
   DIRECTOR: [
     'matrix.view', 'stores.manage', 'stores.locate', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
-    'users.manage', 'devices.manage', 'audit.view', 'system.view', 'apikeys.manage',
+    'people.manage',
   ],
-  // Gestor da franquia: todas as lojas e todos os percursos; cadastra lojas e as pessoas das lojas
   FRANCHISE_MANAGER: [
     'matrix.view', 'stores.manage', 'stores.locate', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view',
-    'users.manage',
+    'people.manage',
   ],
   COORDINATOR: ['matrix.view', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view'],
   STORE_MANAGER: ['stores.locate', 'territory.manage', 'campaigns.manage', 'tracking.view', 'reports.view'],
@@ -74,8 +76,9 @@ export function capabilitiesOf(role: Role): Capability[] {
 /** Quais perfis cada perfil pode criar/editar (ninguém cria alguém acima de si) */
 export function assignableRoles(role: Role): Role[] {
   if (role === 'DEVELOPER') return [...ROLES];
-  if (role === 'ADMIN' || role === 'DIRECTOR') return ['ADMIN', 'DIRECTOR', 'FRANCHISE_MANAGER', 'COORDINATOR', 'STORE_MANAGER', 'PROMOTER'];
-  if (role === 'FRANCHISE_MANAGER') return ['STORE_MANAGER', 'PROMOTER'];
+  if (role === 'ADMIN') return ['ADMIN', 'DIRECTOR', 'FRANCHISE_MANAGER', 'COORDINATOR', 'STORE_MANAGER', 'PROMOTER'];
+  // Diretor e Gestor: só as pessoas das lojas (nunca alteram nem bloqueiam Administrador, Diretor ou Gestor)
+  if (role === 'DIRECTOR' || role === 'FRANCHISE_MANAGER') return ['STORE_MANAGER', 'PROMOTER'];
   return [];
 }
 

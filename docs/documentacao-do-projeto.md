@@ -25,8 +25,8 @@ Todas as permissões são verificadas **no servidor**, em cada operação. Escon
 | --- | --- | --- |
 | Desenvolvedor (TI) | Todas as lojas | Tudo, inclusive Integração, atualização do sistema e substituição de artefatos |
 | Administrador | Todas as lojas (Painel Matriz) | Lojas, territórios, campanhas, usuários, dispositivos, auditoria, Sistema, chaves de API. Não altera a infraestrutura |
-| Diretor | Todas as lojas (Painel Matriz) | O mesmo que o Administrador |
-| Gestor da franquia | Todas as lojas e todos os percursos (Painel Matriz) | Cadastra lojas, abre o painel de cada loja, cadastra e vincula as pessoas das lojas (gerentes e divulgadores), territórios, campanhas e relatórios. É cadastrado pelo Administrador. Não vê auditoria, Sistema nem Integração |
+| Diretor | Todas as lojas (Painel Matriz) | Lojas, territórios, campanhas, relatórios e todos os percursos; cadastra gerentes e divulgadores pelo Painel da loja. **Não acessa a Administração** e não altera administradores |
+| Gestor da franquia | Todas as lojas e todos os percursos (Painel Matriz) | Cadastra lojas, abre o painel de cada loja, cadastra e vincula as pessoas das lojas (gerentes e divulgadores), territórios, campanhas e relatórios. É cadastrado pelo Administrador. **Não acessa a Administração** (usuários, dispositivos, auditoria, Sistema, Integração) e não altera administradores |
 | Coordenador | Todas as lojas (Painel Matriz) | Territórios, campanhas, percursos e relatórios. Não gerencia usuários |
 | Gerente de loja | Só as lojas vinculadas a ele | Painel da loja, registro da localização da loja pelo GPS, territórios, campanhas, percursos e relatórios das suas lojas |
 | Divulgador | Só as campanhas em que é responsável | Modo campo (iniciar e encerrar o rastreamento) e os próprios percursos |

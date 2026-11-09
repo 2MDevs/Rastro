@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { getStoreView, setStoreView } from '../lib/storeView';
 import { ArrowLeft, MapPin, Crosshair, Users as UsersIcon, UserPlus, Link2, X, Megaphone, Route as RouteIcon, Clock, Target, Radio, Smartphone, Share2 } from 'lucide-react';
 import { shareApp } from '../lib/nativeApp';
 import { ApiError, del, get, post, qs } from '../lib/api';
@@ -9,6 +10,7 @@ import { useRealtime } from '../lib/events';
 import { dateTime, distance, duration, pct, relative } from '../lib/format';
 import type { Area, SessionInfo, Store } from '../lib/types';
 import { MapView, MapFeature, MAP_COLORS } from '../components/map/MapView';
+import { PassScale } from '../components/map/LayerPanel';
 import { StoreLocationCapture } from '../components/StoreLocationCapture';
 import { invalidateStores, defaultPeriod } from '../components/filters';
 import { useToast } from '../components/toast';
@@ -21,15 +23,23 @@ export default function StorePanel() {
   const toast = useToast();
   const confirm = useConfirm();
   const matrix = user?.stores === 'ALL';
+  const navigate = useNavigate();
+  // Matriz entrando no painel da loja: passa para a "visão da loja" antes de buscar os dados
+  useLayoutEffect(() => {
+    if (matrix && id && getStoreView()?.id !== id) setStoreView({ id, name: 'Loja' });
+  }, [matrix, id]);
   const [capturing, setCapturing] = useState(false);
   const [period] = useState(defaultPeriod());
   const store = useLoad((s) => get<Store>(`/api/stores/${id}`, s), [id]);
   const areas = useLoad((s) => get<Area[]>(`/api/territory/areas${qs({ storeId: id })}`, s), [id]);
   const dash = useLoad((s) => get(`/api/reports/dashboard${qs({ storeId: id, from: period.from, to: period.to })}`, s), [id]);
-  const people = useLoad((s) => can('users.manage') ? get(`/api/stores/${id}/users`, s) : Promise.resolve(null), [id]);
-  const roles = useLoad((s) => can('users.manage') ? get('/api/users', s).then((r) => r.assignableRoles) : Promise.resolve([]), []);
+  const people = useLoad((s) => can('people.manage') ? get(`/api/stores/${id}/users`, s) : Promise.resolve(null), [id]);
+  const roles = useLoad((s) => can('people.manage') ? get('/api/users', s).then((r) => r.assignableRoles) : Promise.resolve([]), []);
   const [linkId, setLinkId] = useState('');
   const [creating, setCreating] = useState(false);
+  useEffect(() => {
+    if (matrix && store.data && store.data.id === id) setStoreView({ id: store.data.id, name: store.data.name });
+  }, [matrix, store.data, id]);
   useRealtime('data', (ev) => { if (ev?.storeId === id) { store.reload(true); dash.reload(true); } }, [id]);
 
   // Percursos da loja (linha roxa) e quem está em campo agora, atualizando ao vivo
@@ -78,7 +88,7 @@ export default function StorePanel() {
   return (
     <div>
       {confirm.element}
-      {matrix && <Link to="/unidades" className="inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink mb-3"><ArrowLeft className="size-4" /> Unidades</Link>}
+      {matrix && <button onClick={() => { setStoreView(null); navigate('/unidades'); }} className="inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink mb-3"><ArrowLeft className="size-4" /> Voltar ao Painel Matriz</button>}
       <PageHeader title={s.name}
         subtitle={<span className="inline-flex flex-wrap items-center gap-2">Painel da loja · código {s.code}
           {s.status === 'INACTIVE' ? <Badge>Inativa</Badge> : s.operating ? <Badge tone="ok">Em operação</Badge> : <Badge>Sem campanha ativa</Badge>}</span>}
@@ -105,7 +115,8 @@ export default function StorePanel() {
               areas={areaFeatures} routes={routeFeatures} live={liveFeatures}
               fitKey={`${s.id}-${s.location?.lat}-${areaFeatures.length}-${routeFeatures.length > 0}`} visible={{ streets: false, pois: false }} />
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-4 py-2.5 border-t border-line text-xs text-ink-3">
-              <span className="inline-flex items-center gap-2"><span className="inline-block h-1.5 w-6 rounded-full" style={{ background: MAP_COLORS.route }} />Percursos dos divulgadores (últimos 30 dias): {routeFeatures.filter((f) => !f.properties.estimated).length}</span>
+              <span className="inline-flex items-center gap-2"><PassScale />Percursos dos divulgadores (últimos 30 dias): {new Set(routeFeatures.map((f) => f.properties.sessionId)).size}</span>
+              <span className="text-ink-3">Amarelo: passou 1 vez · laranja e vermelho: passou várias vezes</span>
               <span className="inline-flex items-center gap-2"><span className="inline-block size-2.5 rounded-full" style={{ background: MAP_COLORS.live }} />Em campo agora: {liveFeatures.length}</span>
               {!can('tracking.view') && <span>Seu perfil não visualiza percursos de outras pessoas.</span>}
             </div>
@@ -136,7 +147,7 @@ export default function StorePanel() {
             {s.address && <p className="text-xs text-ink-3 mt-3">Endereço: {s.address}</p>}
           </Card>
 
-          {can('users.manage') && (
+          {can('people.manage') && (
             <Card title={<span className="flex items-center gap-2"><UsersIcon className="size-4 text-accent-ink" /> Pessoas da loja</span>} padded={false}
               actions={<Button variant="ghost" icon={<UserPlus className="size-4" />} onClick={() => setCreating(true)}>Nova pessoa</Button>}>
               {!people.data ? <Spinner /> : (

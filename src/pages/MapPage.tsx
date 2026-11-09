@@ -165,7 +165,7 @@ export default function MapPage() {
           <Button variant="primary" onClick={() => setPanelOpen(false)}>Ver mapa</Button>
         </div>
         <LayerPanel visible={layers} onChange={(k, v) => setLayers((l) => ({ ...l, [k]: v }))}
-          counts={{ stores: mapStores.filter((s) => s.location).length, areas: areaFeatures.length, streets: streets.data?.features?.length ?? 0, routes: (routes.data?.features ?? []).filter((f: any) => !f.properties?.estimated).length, pois: poiFeatures.length, live: liveFeatures.length }}
+          counts={{ stores: mapStores.filter((s) => s.location).length, areas: areaFeatures.length, streets: streets.data?.features?.length ?? 0, routes: new Set((routes.data?.features ?? []).map((f: any) => f.properties?.sessionId)).size, pois: poiFeatures.length, live: liveFeatures.length }}
           extra={{
             areas: single && singleArea?.kind === 'RADIUS' && can('territory.manage')
               ? <Link to="/territorios" className="text-xs text-accent-ink underline">Ajustar o raio de alcance em Territórios</Link> : undefined,
