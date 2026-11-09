@@ -82,3 +82,7 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - Diretor e Gestor da franquia não acessam mais a Administração (Usuários, Dispositivos, Auditoria, Sistema, chaves de API) e não conseguem alterar, bloquear ou ver administradores.
 - Eles continuam cadastrando gerente e divulgadores pelo Painel da loja.
 - "Segurança da conta" passou para uma seção "Conta", disponível para todos.
+
+## Ruas neutras no modo claro
+
+- No modo claro, as ruas do mapa gratuito eram amarelas e laranja e se confundiam com o percurso. Agora ficam em cinza claro e branco com contorno cinza (como no modo escuro); parques, água e nomes continuam iguais.

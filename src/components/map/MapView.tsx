@@ -103,6 +103,23 @@ function lastView(): { center: [number, number]; zoom: number } | null {
 
 const fc = (features: MapFeature[] = []) => ({ type: 'FeatureCollection' as const, features });
 
+/**
+ * Modo claro do mapa gratuito: as ruas do estilo original são amarelas e laranja e se confundiam com
+ * o percurso (que começa em amarelo). Aqui as ruas ficam brancas com contorno cinza, como no modo escuro,
+ * mantendo verde de parques, azul da água e os nomes.
+ */
+function neutralizeRoads(m: MlMap) {
+  const skip = /rail|ferry|path|pier|aeroway|cablecar|transit|bridge_.*rail|tunnel_.*rail|aerialway/i;
+  for (const layer of m.getStyle()?.layers ?? []) {
+    if (layer.type !== 'line' || (layer as any)['source-layer'] !== 'transportation' || skip.test(layer.id)) continue;
+    const casing = /casing/i.test(layer.id);
+    const major = /motorway|trunk|primary|secondary|tertiary|link/i.test(layer.id);
+    try {
+      m.setPaintProperty(layer.id, 'line-color', casing ? (major ? '#B3AEA3' : '#D3CEC3') : (major ? '#DEDAD2' : '#FFFFFF'));
+    } catch { /* camada sem cor configurável */ }
+  }
+}
+
 function styleFor(cfg: any, theme: Theme): string | StyleSpecification {
   if (cfg?.basemap?.type === 'style') return theme === 'dark' && cfg.basemap.darkUrl ? cfg.basemap.darkUrl : cfg.basemap.url;
   return buildStyle(cfg, theme);
@@ -190,7 +207,10 @@ export function MapView(props: MapViewProps) {
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     m.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
     bindEvents(m);
-    m.on('style.load', () => { addOverlay(m); setReady((n) => n + 1); });
+    m.on('style.load', () => {
+      if (cfg.basemap?.free && styleTheme.current !== 'dark') neutralizeRoads(m);
+      addOverlay(m); setReady((n) => n + 1);
+    });
     m.once('error', (ev: any) => {
       // Estilo escuro gratuito indisponível: cai para o estilo claro
       if (cfg.basemap?.darkUrl && !m.isStyleLoaded() && /style/i.test(String(ev?.error?.message ?? ''))) m.setStyle(cfg.basemap.url);
