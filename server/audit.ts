@@ -159,6 +159,7 @@ export const ACTION_LABEL: Record<string, string> = {
   USER_UPDATED: 'Usuário alterado',
   USER_BLOCKED: 'Usuário bloqueado',
   USER_UNBLOCKED: 'Usuário desbloqueado',
+  USER_ATTEMPTS_RELEASED: 'Tentativas e IP liberados',
   USER_INVITE_SENT: 'Acesso enviado por e-mail',
   USER_STORES_CHANGED: 'Lojas do usuário alteradas',
   STORE_CREATED: 'Loja criada',

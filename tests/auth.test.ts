@@ -185,6 +185,20 @@ describe('troca de senha', () => {
   });
 });
 
+describe('desbloquear IP e tentativas', () => {
+  it('administração libera quem errou a senha 5 vezes', async () => {
+    const adminU = await createUser('ADMIN');
+    const admin = await login(adminU.email);
+    const u = await createUser('PROMOTER');
+    for (let i = 0; i < 5; i++) await request(app).post('/api/auth/login').send({ email: u.email, password: 'errada-123456' });
+    expect((await request(app).post('/api/auth/login').send({ email: u.email, password: PASSWORD })).status).toBe(429);
+    const r = await admin.post(`/api/users/${u.id}/release-attempts`).send({});
+    expect(r.status).toBe(200);
+    expect(Array.isArray(r.body.ips)).toBe(true);
+    expect((await request(app).post('/api/auth/login').send({ email: u.email, password: PASSWORD })).status).toBe(200);
+  });
+});
+
 describe('cabeçalhos de segurança', () => {
   it('sem x-powered-by e com helmet', async () => {
     const r = await request(app).get('/api/health');

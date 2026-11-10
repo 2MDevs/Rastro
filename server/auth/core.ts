@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator, MemoryStore } from 'express-rate-limit';
 import { pool, Queryable } from '../db';
 import { getInt } from '../settings';
 import { HttpError, clientIp, parseUserAgent } from '../http';
@@ -42,14 +42,28 @@ function cookieOpts(maxAgeMs: number) {
 }
 
 // ---------------------------------------------------------------- limites por IP (login, 2FA, senha)
+// Proteção por endereço (IP): conta só as tentativas que deram errado. Várias pessoas costumam sair pelo
+// mesmo IP (Wi-Fi da loja, operadora de celular), então o limite é por falhas, e a conta de cada pessoa
+// tem a própria proteção (5 senhas erradas = 15 minutos). A administração pode desbloquear na tela Usuários.
+const authStore = new MemoryStore();
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: Number(process.env.AUTH_RATE_LIMIT || 10),
+  limit: Number(process.env.AUTH_RATE_LIMIT || 20),
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: false,
-  message: { error: 'Muitas tentativas a partir deste endereço. Aguarde 15 minutos e tente novamente.' },
+  skipSuccessfulRequests: true,
+  store: authStore,
+  message: { error: 'Muitas tentativas erradas a partir desta internet. Aguarde 15 minutos ou peça para a administração desbloquear.' },
 });
+
+/** Libera um endereço (IP) bloqueado por tentativas erradas */
+export async function resetAuthLimit(ip: string) {
+  await authStore.resetKey(ip);
+  try { await authStore.resetKey(ipKeyGenerator(ip)); } catch { /* IPv4: a chave é o próprio IP */ }
+}
+export async function resetAllAuthLimits() {
+  await authStore.resetAll();
+}
 
 // ---------------------------------------------------------------- sessão
 export async function createSession(userId: string, deviceId: string | null, req: Request, res: Response, db: Queryable = pool) {

@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Plus, UserPlus, Pencil, Lock, Unlock, Send, Smartphone, Users as UsersIcon } from 'lucide-react';
+import { Plus, UserPlus, Pencil, Lock, Unlock, ShieldOff, Send, Smartphone, Users as UsersIcon } from 'lucide-react';
 import { shareApp } from '../lib/nativeApp';
 import { ApiError, get, patch, post } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -17,6 +17,14 @@ export default function Users() {
   const confirm = useConfirm();
   const list = useLoad((s) => get('/api/users', s), []);
   const [editing, setEditing] = useState<any | 'new' | null>(null);
+
+  async function releaseAttempts(u: any) {
+    try {
+      const r = await post<{ ips: string[]; blocked: boolean }>(`/api/users/${u.id}/release-attempts`, {});
+      toast('ok', `${u.name.split(' ')[0]} pode tentar entrar de novo.${r.ips.length ? ` IP liberado: ${r.ips.join(', ')}.` : ''}${r.blocked ? ' Atenção: o acesso está bloqueado; toque em "Liberar" também.' : ''}`);
+      list.reload(true);
+    } catch (err) { toast('error', err instanceof ApiError ? err.message : 'Não foi possível desbloquear.'); }
+  }
 
   async function block(u: any, blocked: boolean) {
     if (!(await confirm.ask(blocked ? 'Bloquear acesso' : 'Liberar acesso', blocked ? <>Bloquear <strong>{u.name}</strong>? Todas as sessões dessa pessoa serão encerradas na hora.</> : <>Liberar o acesso de <strong>{u.name}</strong>?</>, blocked ? 'Bloquear' : 'Liberar', blocked))) return;
@@ -49,6 +57,7 @@ export default function Users() {
                 <Td className="text-right whitespace-nowrap">
                   {u.role === 'PROMOTER' && u.status === 'ACTIVE' && <Button variant="ghost" icon={<Smartphone className="size-4" />} title="Enviar o link do app Android para o divulgador" onClick={() => shareApp(u.name)}>Enviar app</Button>}
                   <Button variant="ghost" icon={<Pencil className="size-4" />} onClick={() => setEditing(u)}>Editar</Button>
+                  {u.id !== me?.id && <Button variant="ghost" icon={<ShieldOff className="size-4" />} title="Libera a pessoa travada por senhas ou códigos errados e o endereço (IP) de onde ela tentou entrar" onClick={() => releaseAttempts(u)}>Desbloquear IP</Button>}
                   {u.id !== me?.id && (u.status === 'BLOCKED'
                     ? <Button variant="ghost" icon={<Unlock className="size-4" />} onClick={() => block(u, false)}>Liberar</Button>
                     : <Button variant="ghost" icon={<Lock className="size-4" />} onClick={() => block(u, true)}>Bloquear</Button>)}

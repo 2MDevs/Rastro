@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { pool, tx } from '../db';
 import { h, HttpError, parse } from '../http';
 import { audit } from '../audit';
-import { requireAuth, userOf, newId, revokeUserSessions } from '../auth/core';
+import { requireAuth, userOf, newId, revokeUserSessions, resetAuthLimit } from '../auth/core';
 import { createPasswordLink } from '../auth/routes';
 import { assignableRoles, can, isDeveloperEmail, MATRIX_ROLES, ROLE_LABEL, ROLES, Role } from '../access';
 import { dropUserStreams } from '../services/realtime';
@@ -173,6 +173,29 @@ usersRouter.post('/:id/block', h(async (req, res) => {
   });
   if (blocked) dropUserStreams(target.id);
   return res.json({ ok: true });
+}));
+
+/**
+ * Desbloquear IP: libera a pessoa que ficou travada por tentativas erradas — o bloqueio de 15 minutos da conta
+ * e os endereços (IP) de onde ela tentou entrar nas últimas 24 horas. Não muda a situação Ativo/Bloqueado.
+ */
+usersRouter.post('/:id/release-attempts', h(async (req, res) => {
+  const actor = userOf(req);
+  const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+  const target = rows[0];
+  if (!target) throw new HttpError(404, 'Usuário não encontrado.');
+  checkRoleAllowed(actor.role, isDeveloperEmail(target.email) ? 'DEVELOPER' : target.role);
+  await pool.query('UPDATE users SET failed_login_attempts = 0, locked_until = NULL, updated_at = NOW() WHERE id = $1', [target.id]);
+  const ipsQ = await pool.query(
+    `SELECT DISTINCT ip FROM audit_logs
+      WHERE (user_id = $1 OR target_id = $1) AND occurred_at > NOW() - INTERVAL '24 hours' AND ip <> ''`,
+    [target.id]
+  );
+  const ips: string[] = ipsQ.rows.map((r) => r.ip).filter((ip) => ip && ip !== 'desconhecido');
+  for (const ip of ips) await resetAuthLimit(ip);
+  await audit(req, { action: 'USER_ATTEMPTS_RELEASED', targetType: 'user', targetId: target.id, targetName: target.email,
+    details: `Bloqueio por tentativas erradas liberado${ips.length ? `; IP(s) liberado(s): ${ips.join(', ')}` : ''}.` });
+  return res.json({ ok: true, ips, blocked: target.status === 'BLOCKED' });
 }));
 
 usersRouter.post('/:id/send-access', h(async (req, res) => {

@@ -108,3 +108,9 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - **Espaço no começo ou no fim** da senha (comum com o teclado do celular) é ignorado.
 - Código por e-mail: se a pessoa sair para o e-mail ver o código e a tela recarregar ao voltar, ela continua no mesmo código (antes voltava para o login e o código mudava).
 - No celular, "Confiar neste dispositivo por 30 dias" já vem marcado, para não pedir o código toda vez.
+
+## Botão "Desbloquear IP" na tela Usuários
+
+- Novo botão **Desbloquear IP** em cada pessoa: libera quem ficou travado por senhas ou códigos errados (o bloqueio de 15 minutos da conta) e os endereços de internet (IP) de onde a pessoa tentou entrar nas últimas 24 horas. Fica registrado na auditoria com os IPs liberados.
+- Não muda a situação Ativo/Bloqueado: uma pessoa **bloqueada pela administração** continua precisando do botão **Liberar**.
+- A proteção por endereço agora conta só as tentativas **erradas** (antes contava todas, inclusive as certas) e aceita até 20 em 15 minutos. Isso evita travar várias pessoas que usam a mesma internet (Wi-Fi da loja, operadora do celular).
