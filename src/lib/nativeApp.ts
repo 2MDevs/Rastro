@@ -46,7 +46,7 @@ export const apkUrl = () => `${window.location.origin}/app/rastro.apk`;
 
 export function appShareText(name?: string) {
   const hi = name ? `Olá, ${name.split(' ')[0]}! ` : 'Olá! ';
-  return `${hi}Baixe o aplicativo do RASTRO no seu celular Android para registrar o percurso da panfletagem: ${appPageUrl()}\nDepois de instalar, entre com o seu e-mail e senha do RASTRO.`;
+  return `${hi}Instale o aplicativo do RASTRO no seu celular para registrar o percurso da panfletagem (Android baixa o app; iPhone instala pela tela de início): ${appPageUrl()}\nDepois de instalar, entre com o seu e-mail e senha do RASTRO.`;
 }
 
 export function whatsappLink(name?: string, phone?: string | null) {
