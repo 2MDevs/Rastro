@@ -168,6 +168,21 @@ describe('troca de senha', () => {
     const r = await request(app).post('/api/auth/login').send({ email: u.email, password: 'OutraSenha2026' });
     expect(r.status).toBe(200);
   });
+
+  it('ao criar a senha pelo link a pessoa já entra; espaços sobrando do teclado não atrapalham', async () => {
+    const u = await createUser('PROMOTER');
+    await request(app).post('/api/auth/forgot-password').send({ email: u.email });
+    const mail = [...memoryOutbox].reverse().find((m) => m.to === u.email && /redefini/i.test(m.subject))!;
+    const token = mail.text.match(/definir-senha#([0-9a-f]{64})/)?.[1] ?? mail.html.match(/definir-senha#([0-9a-f]{64})/)![1];
+    const agent = request.agent(app);
+    const done = await agent.post('/api/auth/password-link/complete').send({ token, newPassword: ' Panfleto2026 ' });
+    expect(done.status).toBe(200);
+    expect(done.body.loggedIn).toBe(true);
+    expect((await agent.get('/api/auth/me')).status).toBe(200);
+    // entra com ou sem o espaço que o teclado do celular coloca no fim
+    expect((await request(app).post('/api/auth/login').send({ email: u.email.toUpperCase(), password: 'Panfleto2026 ' })).status).toBe(200);
+    expect((await request(app).post('/api/auth/login').send({ email: u.email, password: 'Panfleto2026' })).status).toBe(200);
+  });
 });
 
 describe('cabeçalhos de segurança', () => {

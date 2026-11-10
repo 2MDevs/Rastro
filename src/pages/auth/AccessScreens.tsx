@@ -37,7 +37,7 @@ export function Frame({ children }: { children: React.ReactNode }) {
 export function SetPassword() {
   const token = window.location.hash.replace(/^#/, '');
   const [state, setState] = useState<'check' | 'ok' | 'invalid' | 'done'>('check');
-  const [info, setInfo] = useState<{ purpose: string; name: string } | null>(null);
+  const [info, setInfo] = useState<{ purpose: string; name: string; email?: string } | null>(null);
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [busy, setBusy] = useState(false);
@@ -54,8 +54,10 @@ export function SetPassword() {
     if (pw !== pw2) { setError('As duas senhas não são iguais.'); return; }
     setBusy(true); setError(null);
     try {
-      await post('/api/auth/password-link/complete', { token, newPassword: pw });
+      const r = await post('/api/auth/password-link/complete', { token, newPassword: pw });
       history.replaceState(null, '', '/definir-senha');
+      // O link chegou no e-mail da pessoa: ao criar a senha, ela já entra (sem pedir o código de novo)
+      if (r?.loggedIn) { window.location.replace('/'); return; }
       setState('done');
     } catch (err) { setError(err instanceof ApiError ? err.message : 'Não foi possível salvar.'); } finally { setBusy(false); }
   }
@@ -82,9 +84,10 @@ export function SetPassword() {
             <p className="text-sm text-ink-3 mt-1">A senha é pessoal. Ninguém da equipe vai pedir que você a informe.</p>
           </div>
           {error && <ErrorBox>{error}</ErrorBox>}
-          <Field label="Nova senha"><Input type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} /></Field>
+          <Field label="Nova senha"><Input type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={pw} onChange={(e) => setPw(e.target.value)} /></Field>
           <PasswordRules value={pw} />
-          <Field label="Repita a senha"><Input type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} /></Field>
+          <Field label="Repita a senha"><Input type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={pw2} onChange={(e) => setPw2(e.target.value)} /></Field>
+          {info.email && <p className="text-xs text-ink-3">Para entrar, use o e-mail <strong className="text-ink-2">{info.email}</strong> e esta senha.</p>}
           <Button type="submit" variant="primary" loading={busy} className="w-full" disabled={!passwordOk(pw) || !pw2}>Salvar senha</Button>
         </form>
       )}
