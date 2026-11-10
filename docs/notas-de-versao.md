@@ -86,3 +86,9 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 ## Ruas neutras no modo claro
 
 - No modo claro, as ruas do mapa gratuito eram amarelas e laranja e se confundiam com o percurso. Agora ficam em cinza claro e branco com contorno cinza (como no modo escuro); parques, água e nomes continuam iguais.
+
+## Localização da loja por coordenadas
+
+- No cadastro da loja, a busca por endereço foi trocada por um campo para **colar as coordenadas do Google Maps** (ex.: `-22.843600, -43.607825`). Ao colar, o marcador já vai para o local exato no mapa.
+- Aceita também o formato em graus (`22°50'37.0"S 43°36'28.2"W`), vírgula como decimal e o link do Google Maps.
+- O botão "Usar minha localização atual (estou na loja)" e o "Marcar no mapa" continuam.

@@ -1,7 +1,8 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { Plus, Search, Store as StoreIcon, MapPin, Pencil, Crosshair, LayoutDashboard, LocateFixed, Loader2 } from 'lucide-react';
-import { ApiError, get, patch, post, put, qs } from '../lib/api';
+import { Plus, Store as StoreIcon, MapPin, Pencil, Crosshair, LayoutDashboard, LocateFixed, Loader2 } from 'lucide-react';
+import { ApiError, post, put } from '../lib/api';
+import { parseCoords } from '../lib/coords';
 import { useAuth } from '../lib/auth';
 import { relative } from '../lib/format';
 import type { LatLng, Store } from '../lib/types';
@@ -69,9 +70,9 @@ function StoreForm({ store, onClose, onSaved }: { store: Store | null; onClose: 
   const [status, setStatus] = useState(store?.status ?? 'ACTIVE');
   const [location, setLocation] = useState<LatLng | null>(store?.location ?? null);
   const [picking, setPicking] = useState(false);
-  const [search, setSearch] = useState('');
-  const [results, setResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
+  // Coordenadas coladas do Google Maps (ex.: -22.8436, -43.6078)
+  const [coordText, setCoordText] = useState('');
+  const coordParsed = parseCoords(coordText);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [focusKey, setFocusKey] = useState(0);
@@ -114,13 +115,10 @@ function StoreForm({ store, onClose, onSaved }: { store: Store | null; onClose: 
     }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 });
   }
 
-  useEffect(() => { if (!search && address) setSearch(address); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function doSearch() {
-    setSearching(true); setError(null);
-    try { setResults(await get(`/api/map/geocode${qs({ q: search })}`)); }
-    catch (err) { setError(err instanceof ApiError ? err.message : 'Busca indisponível.'); }
-    finally { setSearching(false); }
+  function applyCoords(text = coordText) {
+    const c = parseCoords(text);
+    if (!c) { setError('Não entendi as coordenadas. Cole no formato -22.843600, -43.607825 (copiado do Google Maps).'); return; }
+    setError(null); setLocation(c); setGps(null); setPicking(false); setFocusKey((k) => k + 1);
   }
 
   async function submit(e: FormEvent) {
@@ -176,18 +174,19 @@ function StoreForm({ store, onClose, onSaved }: { store: Store | null; onClose: 
               {gps.accuracy > 100 && ' A precisão está baixa: vai ser salva como "marcada no mapa". Para melhorar, vá perto da porta e tente de novo.'}
             </Notice></div>
           )}
-          <p className="text-xs text-ink-3 mb-2">Ou busque o endereço / marque no mapa:</p>
+          <p className="text-xs text-ink-3 mb-2">Ou cole as coordenadas do Google Maps:</p>
           <div className="flex gap-2">
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar endereço" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); doSearch(); } }} />
-            <Button type="button" icon={<Search className="size-4" />} loading={searching} onClick={doSearch} disabled={search.trim().length < 4}>Buscar</Button>
+            <Input value={coordText} inputMode="text" autoComplete="off" spellCheck={false}
+              onChange={(e) => setCoordText(e.target.value)}
+              onPaste={(e) => { const t = e.clipboardData.getData('text'); if (parseCoords(t)) { e.preventDefault(); setCoordText(t.trim()); applyCoords(t); } }}
+              placeholder="Ex.: -22.843600, -43.607825" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyCoords(); } }}
+              aria-label="Coordenadas da loja (latitude, longitude)" />
+            <Button type="button" icon={<MapPin className="size-4" />} onClick={() => applyCoords()} disabled={!coordParsed}>Usar</Button>
           </div>
-          {results.length > 0 && (
-            <ul className="mt-2 rounded-xl border border-line divide-y divide-line max-h-48 overflow-y-auto scroll-thin">
-              {results.map((r, i) => (
-                <li key={i}><button type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-panel-2" onClick={() => { setLocation({ lat: r.lat, lng: r.lng }); setGps(null); setResults([]); setFocusKey((k) => k + 1); }}>{r.label}</button></li>
-              ))}
-            </ul>
-          )}
+          <p className="text-[11px] text-ink-3 mt-1">
+            No Google Maps, clique com o botão direito em cima da loja (no celular, toque e segure) e copie os números que aparecem. Também aceita o link do Google Maps.
+            {coordText && !coordParsed && <span className="text-warn"> Formato não reconhecido.</span>}
+          </p>
           <div className="mt-3 rounded-xl overflow-hidden border border-line">
             <MapView className="h-80" picking={picking} onPick={(p) => { setLocation(p); setGps(null); setPicking(false); }} pickMarker={location}
               focus={location ? { center: location, zoom: 16, key: focusKey } : null} visible={{ stores: false }} />
