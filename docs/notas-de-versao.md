@@ -92,3 +92,10 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - No cadastro da loja, a busca por endereço foi trocada por um campo para **colar as coordenadas do Google Maps** (ex.: `-22.843600, -43.607825`). Ao colar, o marcador já vai para o local exato no mapa.
 - Aceita também o formato em graus (`22°50'37.0"S 43°36'28.2"W`), vírgula como decimal e o link do Google Maps.
 - O botão "Usar minha localização atual (estou na loja)" e o "Marcar no mapa" continuam.
+
+## Instalar no iPhone (tela de início)
+
+- No **iPhone/iPad** (Safari), aparece um aviso com o passo a passo para instalar o RASTRO pela **tela de início** (Compartilhar → Adicionar à Tela de Início). Some quando já está instalado; "Agora não" esconde por 7 dias. Se o link abriu dentro do WhatsApp ou Instagram, orienta abrir no Safari.
+- A página **/app** mostra a instalação certa para cada celular: APK no Android, tela de início no iPhone.
+- No **Android** o navegador não oferece mais instalar pelo navegador: o app oficial é o APK.
+- Limitação do iPhone: o iOS pausa o GPS quando a tela apaga, então o divulgador deve manter a tela do RASTRO aberta durante o rastreamento.

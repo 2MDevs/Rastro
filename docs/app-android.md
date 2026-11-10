@@ -42,3 +42,7 @@ Nunca envie a chave ou as senhas por chat ou e-mail.
 - O envio de pontos continua mesmo com a tela de PIN do RASTRO bloqueada (só as rotas de pontos e encerramento).
 - Ponte com o site: `window.RastroApp` (`info`, `start`, `stop`, `status`, `openAppSettings`, `openLocationSettings`, `requestBatteryExemption`).
 - Endereço do site embutido no app: variável `RASTRO_BASE_URL` no build (padrão `https://rastro.gestaohummm.com.br`).
+
+## iPhone
+
+Não há APK para iPhone. No iPhone, o RASTRO é instalado pela tela de início (Safari → Compartilhar → Adicionar à Tela de Início); o próprio site mostra esse passo a passo. O iOS pausa o GPS quando a tela apaga, então no iPhone o divulgador mantém a tela do RASTRO aberta enquanto rastreia.
