@@ -32,18 +32,34 @@ function Field({ icon, children }: { icon: React.ReactNode; children: React.Reac
 
 const inputCls = 'flex-1 bg-transparent text-white placeholder:text-[#8C8A82] text-[15px] outline-none';
 
+const PENDING_KEY = 'rastro-login-codigo';
+function readPending(): { email: string; challenge: any } | null {
+  try {
+    const v = JSON.parse(sessionStorage.getItem(PENDING_KEY) || 'null');
+    // o código vale 10 minutos
+    return v && v.challenge?.challengeToken && Date.now() - (v.at ?? 0) < 10 * 60_000 ? v : null;
+  } catch { return null; }
+}
+function writePending(v: { email: string; challenge: any } | null) {
+  try { if (v) sessionStorage.setItem(PENDING_KEY, JSON.stringify({ ...v, at: Date.now() })); else sessionStorage.removeItem(PENDING_KEY); } catch { /* ok */ }
+}
+
 export default function Login() {
   const { refresh } = useAuth();
-  const [step, setStep] = useState<'login' | 'code' | 'forgot'>('login');
-  const [email, setEmail] = useState('');
+  // O passo do código fica guardado nesta aba: no celular, a pessoa sai para o e-mail ver o código e,
+  // se a tela recarregar ao voltar, continua no mesmo código (antes pedia login de novo e o código mudava).
+  const saved = readPending();
+  const [step, setStep] = useState<'login' | 'code' | 'forgot'>(saved ? 'code' : 'login');
+  const [email, setEmail] = useState(saved?.email ?? '');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [challenge, setChallenge] = useState<any>(null);
+  const [challenge, setChallenge] = useState<any>(saved?.challenge ?? null);
   const [code, setCode] = useState('');
-  const [trust, setTrust] = useState(false);
+  // Celular da própria pessoa: já vem marcado (no computador continua desmarcado)
+  const [trust, setTrust] = useState(() => /Android|iPhone|iPad|RastroAndroid/i.test(navigator.userAgent));
   const [resendIn, setResendIn] = useState(0);
   const codeRef = useRef<HTMLInputElement>(null);
 
@@ -60,9 +76,10 @@ export default function Login() {
     e.preventDefault();
     setBusy(true); setError(null); setInfo(null);
     try {
-      const r = await post('/api/auth/login', { email, password });
+      const r = await post('/api/auth/login', { email: email.trim(), password });
       if (r.require2FA) {
         setChallenge(r);
+        writePending({ email: email.trim(), challenge: r });
         setResendIn(r.resendAfterSeconds ?? 60);
         setCode('');
         setStep('code');
@@ -77,10 +94,11 @@ export default function Login() {
     setBusy(true); setError(null);
     try {
       await post('/api/auth/verify-2fa', { challengeToken: challenge.challengeToken, code, trustDevice: trust });
+      writePending(null);
       await refresh();
     } catch (err) {
       fail(err);
-      if (err instanceof ApiError && err.code === 'CODE_INVALIDATED') { setStep('login'); setPassword(''); }
+      if (err instanceof ApiError && (err.code === 'CODE_INVALIDATED' || /expirou|Volte e entre/i.test(err.message))) { writePending(null); setStep('login'); setPassword(''); }
     } finally { setBusy(false); }
   }
 
@@ -138,10 +156,10 @@ export default function Login() {
               {info && <Notice tone="ok">{info}</Notice>}
               {error && <ErrorBox>{error}</ErrorBox>}
               <Field icon={<Mail className="size-5" />}>
-                <input className={inputCls} type="email" autoComplete="username" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required aria-label="E-mail" />
+                <input className={inputCls} type="email" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required aria-label="E-mail" />
               </Field>
               <Field icon={<Lock className="size-5" />}>
-                <input className={inputCls} type={show ? 'text' : 'password'} autoComplete="current-password" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} required aria-label="Senha" />
+                <input className={inputCls} type={show ? 'text' : 'password'} autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} required aria-label="Senha" />
                 <button type="button" onClick={() => setShow((s) => !s)} className="text-[#9C9A92] hover:text-white" aria-label={show ? 'Ocultar senha' : 'Mostrar senha'}>
                   {show ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                 </button>
@@ -173,7 +191,7 @@ export default function Login() {
               </div>
               <Button type="submit" variant="primary" loading={busy} className="w-full h-14 text-base" disabled={code.length !== 6}>Confirmar código</Button>
               <div className="flex items-center justify-between text-sm">
-                <button type="button" className="inline-flex items-center gap-1 text-[#B9B6AA] hover:text-white" onClick={() => { setStep('login'); setError(null); setInfo(null); }}><ArrowLeft className="size-4" /> Voltar</button>
+                <button type="button" className="inline-flex items-center gap-1 text-[#B9B6AA] hover:text-white" onClick={() => { writePending(null); setStep('login'); setError(null); setInfo(null); }}><ArrowLeft className="size-4" /> Voltar</button>
                 <button type="button" disabled={resendIn > 0} onClick={resend} className="text-[#D8D5CB] underline underline-offset-4 disabled:no-underline disabled:text-[#77746B]">
                   {resendIn > 0 ? `Reenviar em ${resendIn}s` : 'Reenviar código'}
                 </button>
@@ -186,7 +204,7 @@ export default function Login() {
               <p className="text-[#B9B6AA] text-sm">Informe o seu e-mail. Se ele estiver cadastrado, você vai receber um link (válido por 30 minutos) para criar uma nova senha.</p>
               {error && <ErrorBox>{error}</ErrorBox>}
               <Field icon={<Mail className="size-5" />}>
-                <input className={inputCls} type="email" autoComplete="username" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required aria-label="E-mail" />
+                <input className={inputCls} type="email" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required aria-label="E-mail" />
               </Field>
               <Button type="submit" variant="primary" loading={busy} className="w-full h-14 text-base" disabled={!email}>Enviar link</Button>
               <button type="button" className="inline-flex items-center gap-1 text-sm text-[#B9B6AA] hover:text-white" onClick={() => { setStep('login'); setError(null); }}><ArrowLeft className="size-4" /> Voltar ao login</button>

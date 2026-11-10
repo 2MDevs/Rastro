@@ -69,7 +69,10 @@ authRouter.post('/login', authLimiter, h(async (req, res) => {
   if (!user.password_hash) {
     throw new HttpError(400, 'Este acesso ainda não tem senha. Use o link recebido por e-mail ou peça um novo à administração.');
   }
-  if (!(await bcrypt.compare(body.password, user.password_hash))) {
+  const trimmed = body.password.trim();
+  const passwordOk = (await bcrypt.compare(body.password, user.password_hash))
+    || (trimmed !== body.password && trimmed.length > 0 && (await bcrypt.compare(trimmed, user.password_hash)));
+  if (!passwordOk) {
     const attempts = (user.failed_login_attempts || 0) + 1;
     if (attempts >= 5) {
       await pool.query(`UPDATE users SET failed_login_attempts = 0, locked_until = NOW() + INTERVAL '15 minutes' WHERE id = $1`, [user.id]);
@@ -254,17 +257,19 @@ export async function createPasswordLink(user: { id: string; name: string; email
 authRouter.post('/password-link/check', authLimiter, h(async (req, res) => {
   const token = String(req.body?.token || '');
   const { rows } = await pool.query(
-    `SELECT p.purpose, u.name FROM password_resets p JOIN users u ON u.id = p.user_id
+    `SELECT p.purpose, u.name, u.email FROM password_resets p JOIN users u ON u.id = p.user_id
       WHERE p.token_hash = $1 AND p.used_at IS NULL AND p.expires_at > NOW() AND u.status = 'ACTIVE'`,
     [sha256(token)]
   );
   if (!rows[0]) throw new HttpError(400, 'Este link expirou ou já foi usado. Peça um novo.');
-  return res.json({ valid: true, purpose: rows[0].purpose, name: rows[0].name.split(' ')[0] });
+  // O e-mail aparece para a pessoa saber exatamente com qual endereço entrar (quem abre o link já o recebeu nele)
+  return res.json({ valid: true, purpose: rows[0].purpose, name: rows[0].name.split(' ')[0], email: rows[0].email });
 }));
 
 authRouter.post('/password-link/complete', authLimiter, h(async (req, res) => {
   const token = String(req.body?.token || '');
-  const password = validatePassword(req.body?.newPassword);
+  // Espaços no começo/fim (comuns com o teclado do celular) não fazem parte da senha
+  const password = validatePassword(typeof req.body?.newPassword === 'string' ? req.body.newPassword.trim() : req.body?.newPassword);
   const hash = await bcrypt.hash(password, 12);
   const user = await tx(async (db) => {
     const { rows } = await db.query(
@@ -281,10 +286,13 @@ authRouter.post('/password-link/complete', authLimiter, h(async (req, res) => {
     await revokeUserSessions(rows[0].id, undefined, db);
     // Trocar a senha tira a confiança dos dispositivos: o próximo acesso pede o código de novo
     await db.query(`UPDATE auth_devices SET status = 'REVOKED', trusted_until = NULL WHERE user_id = $1 AND status = 'TRUSTED'`, [rows[0].id]);
+    // O link foi recebido no e-mail da pessoa (equivale ao código por e-mail): já entra neste aparelho
+    const deviceId = await registerAuthDevice(rows[0].id, false, undefined, req, res, db);
+    await createSession(rows[0].id, deviceId, req, res, db);
     return rows[0];
   });
-  await anonAudit(req, user, 'PASSWORD_RESET', 'SUCCESS', user.purpose === 'invite' ? 'Senha criada pelo link de acesso.' : 'Senha redefinida pelo link.');
-  return res.json({ ok: true, message: 'Senha salva. Agora é só entrar.' });
+  await anonAudit(req, user, 'PASSWORD_RESET', 'SUCCESS', user.purpose === 'invite' ? 'Senha criada pelo link de acesso (entrada liberada neste aparelho).' : 'Senha redefinida pelo link (entrada liberada neste aparelho).');
+  return res.json({ ok: true, loggedIn: true, message: 'Senha salva.' });
 }));
 
 authRouter.post('/change-password', requireAuth(), authLimiter, h(async (req, res) => {

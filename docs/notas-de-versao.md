@@ -99,3 +99,12 @@ As notas de cada atualização aparecem dentro do sistema (Sistema › Artefatos
 - A página **/app** mostra a instalação certa para cada celular: APK no Android, tela de início no iPhone.
 - No **Android** o navegador não oferece mais instalar pelo navegador: o app oficial é o APK.
 - Limitação do iPhone: o iOS pausa o GPS quando a tela apaga, então o divulgador deve manter a tela do RASTRO aberta durante o rastreamento.
+
+## Divulgador consegue entrar depois de criar a senha
+
+- Ao criar a senha pelo link do e-mail, a pessoa **já entra** no RASTRO (o link chegou no e-mail dela, o que vale como o código de verificação).
+- A tela de criar senha mostra o **e-mail exato** que deve ser usado para entrar.
+- Campos de e-mail e senha não deixam mais o teclado do celular colocar **letra maiúscula automática** nem **corrigir** a palavra (isso trocava a senha sem a pessoa perceber, principalmente ao tocar em "mostrar senha").
+- **Espaço no começo ou no fim** da senha (comum com o teclado do celular) é ignorado.
+- Código por e-mail: se a pessoa sair para o e-mail ver o código e a tela recarregar ao voltar, ela continua no mesmo código (antes voltava para o login e o código mudava).
+- No celular, "Confiar neste dispositivo por 30 dias" já vem marcado, para não pedir o código toda vez.
